@@ -1,160 +1,76 @@
-**Leave Manager**
-
-A lightweight web app to plan and calculate internship attendance with support for full/half-day leaves, sandwich-leave penalties, 2nd/4th-Saturday rules and Gujarat public holidays (2026). The app is designed to run publicly without user accounts by default using browser LocalStorage; server/cloud persistence is preserved in the code and can be re-enabled later.
-
-**Quick Links**
-- **Local page**: Open the app via `npm run dev` and visit `http://localhost:3000`.
-- **Code**: Main UI is in `src/app/page.tsx`. Attendance logic is in `src/lib/attendance.ts`.
-
-Live demo
----------
-
-The app is deployed on Vercel. Known deployment domains for this project:
-
-- leave-manager-r7gmnbpjl-vikrant-kawadkars-projects.vercel.app
-- leave-manager-five.vercel.app
-
-If a link from GitHub opens to a `404: NOT_FOUND (DEPLOYMENT_NOT_FOUND)` error, it's likely pointing to a preview deployment that has expired or to an incorrect URL. To fix the GitHub repo link:
-
-1. Open your repository on GitHub.
-2. On the right sidebar (About), click the gear icon next to **Website**.
-3. Paste the production domain (for example `https://leave-manager-five.vercel.app`) and save.
-
-Alternatively, update the live-demo link in this README to the correct domain. The README below includes instructions and the primary Vercel domain.
-
-
-**Features**
-- **Attendance rules**: 80% target calculation, safe-buffer days, half-day semantics.
-- **Sandwich rule**: Holidays/weekends that are bracketed by user leaves are marked as `SANDWICH_LEAVE` and treated as penalized leave.
-- **Weekend rules**: Sundays and 2nd/4th Saturdays are treated as off days by default.
-- **Holidays**: Gujarat public holidays for 2026 are pre-populated in `src/lib/attendance.ts`.
-- **Persistence**: Client-side LocalStorage by default, with commented cloud API and Prisma hooks kept for future use.
-
-**How to Use**
-- **Select Range**: Use the `Start Date` and `End Date` controls to set the period you want to evaluate.
-- **Toggle Day Status**: Click a day in the calendar to cycle through statuses (Full Leave → Half Morning → Half Afternoon → Delete/Reset). Clicking on an `OFF`/`SANDWICH_LEAVE` day will mark it as `PRESENT` if you want to override.
-- **Dashboard**: Top-right cards show Attendance Score, Safe Buffer, Total Leaves, and Working Days.
-
-**Persistence & Re-enabling Cloud**
-- Default: Browser LocalStorage via `src/lib/localStore.ts` (read/upsert/delete functions). This lets you publish the app without accounts and keep user data on their device.
-- Cloud: The server API route `src/app/api/records/route.ts` and `src/lib/prisma.ts` remain in the repo. Cloud persistence is commented/kept as a fallback; to re-enable, switch API calls back in `src/app/page.tsx` and provide a production database and appropriate environment variables.
-
-**Development**
-Prerequisites: `node >= 18`, `npm`.
-
-Install dependencies and run locally:
-
-```bash
-cd web-app
-npm install
-npx prisma generate   # only if you plan to use Prisma/cloud API
-npm run dev
-```
-
-Build for production:
-
-```bash
-npm run build
-npm run start
-```
-
-Deployment (Vercel):
-- The app runs as a standard Next.js project. Since this project uses LocalStorage by default, no server DB is required for public deployment.
-- If you re-enable the Prisma/cloud path, ensure `@prisma/client` is generated during build (add a `postinstall` script such as `npx prisma generate`), and set `DATABASE_URL` in Vercel environment variables.
-
-**Notes & Gotchas**
-- The app was intentionally switched to LocalStorage to avoid runtime/packaging issues with `@prisma/client` during Vercel builds. If you want global/shared persistence, integrate a hosted Postgres (Supabase is recommended) or ensure Prisma client generation runs on build.
-- Holidays use the Gujarat 2026 public holiday list provided by the user. Update `src/lib/attendance.ts` if you need other years or states.
-
-**Files of Interest**
-- `src/app/page.tsx`: Main UI and interaction handlers.
-- `src/lib/attendance.ts`: Core attendance computation and sandwich rule logic.
-- `src/lib/localStore.ts`: Browser LocalStorage persistence implementation.
-- `src/app/api/records/route.ts`: Server route (file-based or Prisma) kept for future re-enable.
-
-**Contributing**
-- Open an issue or PR for feature requests or bug fixes. If you re-enable cloud persistence, add tests around the sandwich rule and buffer calculation.
-
-**License**
-- MIT
 # Leave Manager
 
-A lightweight internship attendance planner with sandwich-leave rules and a visual calendar.
+Attendance tracker and leave management system built for interns and employees. Calculate attendance percentages, manage leaves (full/half), and automatically handle sandwich rules and public holidays.
 
-## Features
-- Visual calendar to mark days as Present / Full Leave / Half Leave (morning/afternoon)
-- Sandwich leave detection: weekends/holidays between leaves count as full leave
-- Safe Buffer counter showing how many full-day leaves you can take before dropping below 80%
-- Pre-filled Gujarat / National holidays and 2nd/4th Saturday handling
-- Simple local JSON storage (dev) with a Prisma schema ready in `prisma/` (optional)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-16-black)
+![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8)
 
-## Tech Stack
-- Next.js (App Router, TypeScript)
-- Tailwind CSS
-- Prisma (SQLite) schema included; during development the app uses a JSON file store at `src/data/records.json`
-- date-fns for date handling
+## ✨ Features
 
-## Quick Start
-1. Install dependencies
+- **Attendance Tracking:** Real-time calculation of attendance percentage (80% target).
+- **Leave Types:** Support for Full Day, Half Day (Morning/Afternoon).
+- **Sandwich Rule Logic:** Automatically detects and penalizes sandwich leaves (holidays wrapped by leaves).
+- **Public Holidays:** Pre-configured with Gujarat 2026 public holidays.
+- **Smart Calendar:** Defaults to current year view.
+- **Dark Mode:** Fully responsive dark/light theme toggle.
+- **Data Persistence:** Uses LocalStorage for privacy and offline capability (no login required).
 
-```bash
-cd web-app
-npm install
-```
+## 🚀 Live Demo
 
-2. Generate Prisma client (optional, only if you want to use Prisma DB instead of local JSON)
+[https://leave-manager-five.vercel.app](https://leave-manager-five.vercel.app)
 
-```bash
-npx prisma generate
-npx prisma migrate dev --name init
-```
+## 🛠️ Tech Stack
 
-3. Run dev server
+- **Framework:** Next.js 16 (App Router)
+- **Styling:** Tailwind CSS v4 & Lucide React Icons
+- **Language:** TypeScript
+- **State Management:** React Hooks & Context
+- **Persistence:** LocalStorage (Client-side)
 
-```bash
-npm run dev
-# open http://localhost:3000
-```
+## 💻 Getting Started
 
-## Notes
-- By default the API uses a file-based store at `src/data/records.json` so you can run the app without configuring a database. To restore Prisma-backed persistence, update `src/app/api/records/route.ts` to use `src/lib/prisma.ts` and ensure `DATABASE_URL` is set in `.env`.
-- If you see React hydration warnings in development caused by browser extensions (e.g., Grammarly), either disable the extension or accept the benign warning — a temporary `suppressHydrationWarning` was added to `src/app/layout.tsx` to reduce console noise.
+### Prerequisites
 
-## License
-MIT
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+- Node.js 18+
+- npm
 
-## Getting Started
+### Installation
 
-First, run the development server:
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ark5234/Leave-Manager.git
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. Navigate to the project directory:
+   ```bash
+   cd Leave-Manager/web-app
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+## 📖 How to Use
 
-To learn more about Next.js, take a look at the following resources:
+1. **Set Date Range:** Use the start and end date pickers to define your internship or tracking period.
+2. **Mark Leaves:** Click on any date in the calendar to toggle its status:
+   - Click 1x: Full Leave (Red)
+   - Click 2x: Half Day Morning (Orange)
+   - Click 3x: Half Day Afternoon (Orange)
+   - Click 4x: Reset to default
+3. **Check Stats:** The dashboard at the top updates automatically to show your current attendance percentage and safe buffer days.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 👨‍💻 Credits
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Made by Vikrant Kawadkar**
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Project created as a personal tool for managing internship attendance.

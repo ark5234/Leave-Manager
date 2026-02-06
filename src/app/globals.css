@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Force "class" strategy for dark mode in Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,15 +15,27 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Remove media query default behavior to strictly follow .dark class */
+/*
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
 }
+*/
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.dark {
+    --background: #0f172a; /* Slate-900 matches app theme */
+    --foreground: #e2e8f0; /* Slate-200 */
+}
+.dark body {
+    background: var(--background);
+    color: var(--foreground);
 }
