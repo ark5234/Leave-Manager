@@ -44,11 +44,12 @@ export default function Home() {
 
   const stats = useMemo(() => getStats(timeline), [timeline]);
 
-  const handleDayClick = async (day: DayInfo) => {
+    const handleDayClick = async (day: DayInfo) => {
     // Prevent accidentally clicking loading/invalid days
     if (!startDate || !endDate) return;
 
-    let newStatus = 'LEAVE_FULL';
+    type NewStatus = UserRecord['status'] | 'DELETE';
+    let newStatus: NewStatus = 'LEAVE_FULL';
     
     // Cycle logic based on EXISTING RECORD first
     if (day.originalStatus === 'LEAVE_FULL') newStatus = 'LEAVE_HALF_MORNING';
@@ -66,7 +67,7 @@ export default function Home() {
                 await deleteRecord(day.date);
                 setRecords(prev => prev.filter(r => !isSameDay(new Date(r.date), day.date)));
             } else {
-                const toSave: UserRecord = { date: day.date.toISOString(), status: newStatus as any };
+                const toSave: UserRecord = { date: day.date.toISOString(), status: newStatus };
                 const result = await upsertRecord(toSave);
                 setRecords(prev => {
                     const exists = prev.find(r => isSameDay(new Date(r.date), new Date(result.date)));
