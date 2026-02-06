@@ -13,6 +13,9 @@ export default function Home() {
   const [records, setRecords] = useState<UserRecord[]>([]);
     const [transientRecords, setTransientRecords] = useState<UserRecord[]>([]); // for non-persistent simulation
   const [loading, setLoading] = useState(true);
+    const [simulationMode, setSimulationMode] = useState(false);
+    const [simRangeStart, setSimRangeStart] = useState('');
+    const [simRangeEnd, setSimRangeEnd] = useState('');
 
     useEffect(() => {
         let mounted = true;
@@ -70,6 +73,18 @@ export default function Home() {
     // If no record, decide based on Computed Status
     else if (day.status === 'OFF' || day.status === 'SANDWICH_LEAVE') newStatus = 'PRESENT'; // Override Holiday/Sandwich
     else newStatus = 'LEAVE_FULL'; // Override Work Day
+
+        // If simulationMode is active, toggle transientRecords instead of persisting
+        if (simulationMode) {
+            const iso = day.date.toISOString().slice(0,10);
+            const exists = transientRecords.find(r => new Date(r.date).toISOString().slice(0,10) === iso);
+            if (exists) {
+                setTransientRecords(prev => prev.filter(r => new Date(r.date).toISOString().slice(0,10) !== iso));
+            } else {
+                setTransientRecords(prev => [...prev, { date: day.date.toISOString(), status: newStatus }]);
+            }
+            return;
+        }
 
         // Persist to client LocalStorage (preferred for public, no-accounts app)
         if (typeof window !== 'undefined') {
@@ -152,6 +167,59 @@ export default function Home() {
                         title="Select start date"
                     />
                 </div>
+                {/* Simulation range controls */}
+                <div className="flex items-center gap-2 bg-white p-2 rounded-md border">
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500">Sim From</label>
+                        <input type="date" value={simRangeStart} onChange={(e)=>setSimRangeStart(e.target.value)} className="text-sm" />
+                    </div>
+                    <div className="flex flex-col">
+                        <label className="text-xs text-gray-500">Sim To</label>
+                        <input type="date" value={simRangeEnd} onChange={(e)=>setSimRangeEnd(e.target.value)} className="text-sm" />
+                    </div>
+                    <button
+                        type="button"
+                        className="text-xs px-2 py-1 bg-emerald-600 text-white rounded-md hover:bg-emerald-700"
+                        onClick={() => {
+                            // Add range as transient LEAVE_FULL
+                            if (!simRangeStart || !simRangeEnd) return;
+                            const start = new Date(simRangeStart);
+                            const end = new Date(simRangeEnd);
+                            if (start > end) return;
+                            const days: UserRecord[] = [];
+                            for (let d = new Date(start); d <= end; d.setDate(d.getDate()+1)) {
+                                days.push({ date: new Date(d).toISOString(), status: 'LEAVE_FULL' });
+                            }
+                            // Merge transientRecords (avoid duplicates)
+                            setTransientRecords(prev => {
+                                const map = new Map(prev.map(r=>[new Date(r.date).toISOString().slice(0,10), r]));
+                                days.forEach(r => map.set(new Date(r.date).toISOString().slice(0,10), r));
+                                return Array.from(map.values());
+                            });
+                        }}
+                    >Add Range</button>
+                    <button
+                        type="button"
+                        className="text-xs px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                        onClick={async () => {
+                            // Apply transient simulation to persistent storage
+                            if (transientRecords.length === 0) return;
+                            for (const r of transientRecords) {
+                                await upsertRecord(r);
+                            }
+                            // reload persisted records from storage
+                            const updated = await readRecords();
+                            setRecords(updated);
+                            setTransientRecords([]);
+                            setSimulationMode(false);
+                        }}
+                    >Apply Simulation</button>
+                    <button
+                        type="button"
+                        className="text-xs px-2 py-1 bg-gray-200 rounded-md"
+                        onClick={() => setTransientRecords([])}
+                    >Clear Simulation</button>
+                </div>
                 <div className="w-px h-8 bg-gray-300"></div>
                 <div className="flex flex-col">
                     <label className="text-xs text-gray-500 font-semibold uppercase">End Date</label>
@@ -188,6 +256,10 @@ export default function Home() {
                     >
                         {transientRecords.some(r => new Date(r.date).toISOString().slice(0,10) === new Date().toISOString().slice(0,10)) ? 'Clear Simulation' : 'Simulate Leave Today'}
                     </button>
+                    <div className="flex items-center gap-2">
+                        <label className="text-xs text-gray-500">Simulation</label>
+                        <input type="checkbox" checked={simulationMode} onChange={(e) => setSimulationMode(e.target.checked)} className="h-4 w-4" />
+                    </div>
                 </div>
             </div>
         </div>
