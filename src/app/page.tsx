@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import { calculateAttendance, getStats, DayInfo, UserRecord } from '@/lib/attendance';
+import { readRecords, upsertRecord, deleteRecord } from '@/lib/localStore';
 import { Calendar as CalendarIcon, AlertCircle, CheckCircle, XCircle, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -12,14 +13,29 @@ export default function Home() {
   const [records, setRecords] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/api/records')
-      .then(res => res.json())
-      .then(data => {
-        setRecords(data);
-        setLoading(false);
-      });
-  }, []);
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            setLoading(true);
+            // Prefer client-side LocalStorage for persistence (no accounts, public app).
+            const local = await readRecords();
+            if (mounted) {
+                setRecords(local);
+                setLoading(false);
+            }
+
+            // Cloud API fallback (kept commented for future re-enable):
+            /*
+            const res = await fetch('/api/records');
+            const data = await res.json();
+            if (mounted) {
+                setRecords(data);
+                setLoading(false);
+            }
+            */
+        })();
+        return () => { mounted = false; };
+    }, []);
 
   const timeline = useMemo(() => {
     if (!startDate || !endDate) return [];
@@ -44,29 +60,45 @@ export default function Home() {
     else if (day.status === 'OFF' || day.status === 'SANDWICH_LEAVE') newStatus = 'PRESENT'; // Override Holiday/Sandwich
     else newStatus = 'LEAVE_FULL'; // Override Work Day
 
-    // API Call
-    const res = await fetch('/api/records', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        date: day.date,
-        status: newStatus
-      })
-    });
-    
-    if (res.ok) {
-        const result = await res.json();
-        setRecords(prev => {
+        // Persist to client LocalStorage (preferred for public, no-accounts app)
+        if (typeof window !== 'undefined') {
             if (newStatus === 'DELETE') {
-                return prev.filter(r => !isSameDay(new Date(r.date), new Date(day.date)));
+                await deleteRecord(day.date);
+                setRecords(prev => prev.filter(r => !isSameDay(new Date(r.date), day.date)));
+            } else {
+                const toSave: UserRecord = { date: day.date.toISOString(), status: newStatus as any };
+                const result = await upsertRecord(toSave);
+                setRecords(prev => {
+                    const exists = prev.find(r => isSameDay(new Date(r.date), new Date(result.date)));
+                    if (exists) {
+                        return prev.map(r => isSameDay(new Date(r.date), new Date(result.date)) ? result : r);
+                    }
+                    return [...prev, result];
+                });
             }
-            const exists = prev.find(r => isSameDay(new Date(r.date), new Date(result.date)));
-            if (exists) {
-                return prev.map(r => isSameDay(new Date(r.date), new Date(result.date)) ? result : r);
+        } else {
+            // Cloud API call preserved and commented so it can be re-enabled in future.
+            /*
+            const res = await fetch('/api/records', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ date: day.date, status: newStatus })
+            });
+            if (res.ok) {
+                const result = await res.json();
+                setRecords(prev => {
+                    if (newStatus === 'DELETE') {
+                        return prev.filter(r => !isSameDay(new Date(r.date), new Date(day.date)));
+                    }
+                    const exists = prev.find(r => isSameDay(new Date(r.date), new Date(result.date)));
+                    if (exists) {
+                        return prev.map(r => isSameDay(new Date(r.date), new Date(result.date)) ? result : r);
+                    }
+                    return [...prev, result];
+                });
             }
-            return [...prev, result];
-        });
-    }
+            */
+        }
   };
 
   const months = useMemo(() => {
