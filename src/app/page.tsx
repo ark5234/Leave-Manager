@@ -153,6 +153,16 @@ export default function Home() {
                         title="Select end date"
                     />
                 </div>
+                <div className="w-px h-8 bg-gray-300"></div>
+                <div className="flex items-center">
+                    <button
+                        type="button"
+                        className="text-xs px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                        onClick={() => setEndDate(new Date().toISOString().slice(0,10))}
+                    >
+                        End = Today
+                    </button>
+                </div>
             </div>
         </div>
 
