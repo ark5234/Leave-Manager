@@ -1,3 +1,65 @@
+**Leave Manager**
+
+A lightweight web app to plan and calculate internship attendance with support for full/half-day leaves, sandwich-leave penalties, 2nd/4th-Saturday rules and Gujarat public holidays (2026). The app is designed to run publicly without user accounts by default using browser LocalStorage; server/cloud persistence is preserved in the code and can be re-enabled later.
+
+**Quick Links**
+- **Local page**: Open the app via `npm run dev` and visit `http://localhost:3000`.
+- **Code**: Main UI is in `src/app/page.tsx`. Attendance logic is in `src/lib/attendance.ts`.
+
+**Features**
+- **Attendance rules**: 80% target calculation, safe-buffer days, half-day semantics.
+- **Sandwich rule**: Holidays/weekends that are bracketed by user leaves are marked as `SANDWICH_LEAVE` and treated as penalized leave.
+- **Weekend rules**: Sundays and 2nd/4th Saturdays are treated as off days by default.
+- **Holidays**: Gujarat public holidays for 2026 are pre-populated in `src/lib/attendance.ts`.
+- **Persistence**: Client-side LocalStorage by default, with commented cloud API and Prisma hooks kept for future use.
+
+**How to Use**
+- **Select Range**: Use the `Start Date` and `End Date` controls to set the period you want to evaluate.
+- **Toggle Day Status**: Click a day in the calendar to cycle through statuses (Full Leave → Half Morning → Half Afternoon → Delete/Reset). Clicking on an `OFF`/`SANDWICH_LEAVE` day will mark it as `PRESENT` if you want to override.
+- **Dashboard**: Top-right cards show Attendance Score, Safe Buffer, Total Leaves, and Working Days.
+
+**Persistence & Re-enabling Cloud**
+- Default: Browser LocalStorage via `src/lib/localStore.ts` (read/upsert/delete functions). This lets you publish the app without accounts and keep user data on their device.
+- Cloud: The server API route `src/app/api/records/route.ts` and `src/lib/prisma.ts` remain in the repo. Cloud persistence is commented/kept as a fallback; to re-enable, switch API calls back in `src/app/page.tsx` and provide a production database and appropriate environment variables.
+
+**Development**
+Prerequisites: `node >= 18`, `npm`.
+
+Install dependencies and run locally:
+
+```bash
+cd web-app
+npm install
+npx prisma generate   # only if you plan to use Prisma/cloud API
+npm run dev
+```
+
+Build for production:
+
+```bash
+npm run build
+npm run start
+```
+
+Deployment (Vercel):
+- The app runs as a standard Next.js project. Since this project uses LocalStorage by default, no server DB is required for public deployment.
+- If you re-enable the Prisma/cloud path, ensure `@prisma/client` is generated during build (add a `postinstall` script such as `npx prisma generate`), and set `DATABASE_URL` in Vercel environment variables.
+
+**Notes & Gotchas**
+- The app was intentionally switched to LocalStorage to avoid runtime/packaging issues with `@prisma/client` during Vercel builds. If you want global/shared persistence, integrate a hosted Postgres (Supabase is recommended) or ensure Prisma client generation runs on build.
+- Holidays use the Gujarat 2026 public holiday list provided by the user. Update `src/lib/attendance.ts` if you need other years or states.
+
+**Files of Interest**
+- `src/app/page.tsx`: Main UI and interaction handlers.
+- `src/lib/attendance.ts`: Core attendance computation and sandwich rule logic.
+- `src/lib/localStore.ts`: Browser LocalStorage persistence implementation.
+- `src/app/api/records/route.ts`: Server route (file-based or Prisma) kept for future re-enable.
+
+**Contributing**
+- Open an issue or PR for feature requests or bug fixes. If you re-enable cloud persistence, add tests around the sandwich rule and buffer calculation.
+
+**License**
+- MIT
 # Leave Manager
 
 A lightweight internship attendance planner with sandwich-leave rules and a visual calendar.
