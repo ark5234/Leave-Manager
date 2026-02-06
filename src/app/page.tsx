@@ -153,6 +153,21 @@ export default function Home() {
                         title="Select end date"
                     />
                 </div>
+                <div className="w-px h-8 bg-gray-300"></div>
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        className="text-xs px-2 py-1 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        onClick={async () => {
+                            const ok = typeof window !== 'undefined' && confirm('Reset all saved leaves? This will clear LocalStorage and cannot be undone.');
+                            if (!ok) return;
+                            await clearAll();
+                            setRecords([]);
+                        }}
+                    >
+                        Reset Leaves
+                    </button>
+                </div>
                 
             </div>
         </div>
