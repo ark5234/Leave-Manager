@@ -1,11 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+import clientPkg from '@prisma/client';
 
-const prisma = new PrismaClient({
-	datasources: {
-		db: {
-			url: process.env.DATABASE_URL,
-		},
-	},
-});
+// Prisma v7 has different client packaging; access the constructor dynamically
+const PrismaClientCtor: any = (clientPkg as any).PrismaClient ?? (clientPkg as any).default?.PrismaClient ?? clientPkg;
+
+// Construct without passing `datasources` (Prisma v7 expects config in prisma.config.ts / env)
+const prisma: any = new PrismaClientCtor();
 
 export default prisma;
