@@ -6,7 +6,7 @@ Attendance tracker and leave management system built for interns and employees. 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black)
 ![Tailwind](https://img.shields.io/badge/Tailwind-CSS-38bdf8)
 
-## ✨ Features
+## Features
 
 - **Attendance Tracking:** Real-time calculation of attendance percentage (80% target).
 - **Leave Types:** Support for Full Day, Half Day (Morning/Afternoon).
@@ -16,11 +16,11 @@ Attendance tracker and leave management system built for interns and employees. 
 - **Dark Mode:** Fully responsive dark/light theme toggle.
 - **Data Persistence:** Uses LocalStorage for privacy and offline capability (no login required).
 
-## 🚀 Live Demo
+## Live Demo
 
 [https://leave-manager-five.vercel.app](https://leave-manager-five.vercel.app)
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework:** Next.js 16 (App Router)
 - **Styling:** Tailwind CSS v4 & Lucide React Icons
@@ -28,7 +28,7 @@ Attendance tracker and leave management system built for interns and employees. 
 - **State Management:** React Hooks & Context
 - **Persistence:** LocalStorage (Client-side)
 
-## 💻 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -59,7 +59,7 @@ Attendance tracker and leave management system built for interns and employees. 
 
 5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 📖 How to Use
+## How to Use
 
 1. **Set Date Range:** Use the start and end date pickers to define your internship or tracking period.
 2. **Mark Leaves:** Click on any date in the calendar to toggle its status:
@@ -69,7 +69,7 @@ Attendance tracker and leave management system built for interns and employees. 
    - Click 4x: Reset to default
 3. **Check Stats:** The dashboard at the top updates automatically to show your current attendance percentage and safe buffer days.
 
-## 👨‍💻 Credits
+## Credits
 
 **Made by Vikrant Kawadkar**
 
