@@ -69,6 +69,12 @@ Attendance tracker and leave management system built for interns and employees. 
    - Click 4x: Reset to default
 3. **Check Stats:** The dashboard at the top updates automatically to show your current attendance percentage and safe buffer days.
 
+## ⚠️ Disclaimer
+
+This is **not an official application** and should be used for estimation purposes only. The attendance predictions and sandwich rule logic are based on standard interpretations and may not perfectly align with official administrative records.
+
+**Note on Holidays:** The official holiday list for the specific institution was not available at the time of development. Consequently, this application uses the **Gujarat Government Official Public Holidays 2026** as a reference. Please verify dates with your official schedule.
+
 ## Credits
 
 **Made by Vikrant Kawadkar**
