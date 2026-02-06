@@ -18,17 +18,28 @@ export type DayInfo = {
 
 // Mock Gujarat/National Holidays for 2026 (and late 2025)
 export const HOLIDAYS = [
-  { date: '2026-01-14', name: 'Uttarayan' },
+  { date: '2026-01-14', name: 'Makar Sankranti' },
   { date: '2026-01-26', name: 'Republic Day' },
-  { date: '2026-03-08', name: 'Maha Shivratri' },
-  { date: '2026-03-25', name: 'Holi' }, // Estimated
-  { date: '2026-04-14', name: 'Ambedkar Jayanti' },
-  { date: '2026-08-15', name: 'Independence Day' },
+  { date: '2026-03-04', name: 'Holi (Dhuleti)' },
+  { date: '2026-03-19', name: 'Chetichand' },
+  { date: '2026-03-21', name: 'Ramjan-Eid (Eid-Ul-Fitra)' },
+  { date: '2026-03-26', name: 'Shree Ram Navmi' },
+  { date: '2026-03-31', name: 'Mahavir Janma Kalyanak' },
+  { date: '2026-04-03', name: 'Good Friday' },
+  { date: '2026-04-14', name: "Dr. Baba Saheb Ambedkar's Birthday" },
+  { date: '2026-05-27', name: 'Eid-Ul-Adha (Bakri-Eid)' },
+  { date: '2026-06-26', name: 'Muharram (Ashoora)' },
+  { date: '2026-08-15', name: 'Independence Day / Parsi New Year (Pateti)' },
+  { date: '2026-08-26', name: "Eid-e-Miladunnabi (Prophet's Birthday)" },
   { date: '2026-08-28', name: 'Raksha Bandhan' },
-  { date: '2026-09-05', name: 'Janmashtami' },
-  { date: '2026-10-02', name: 'Gandhi Jayanti' },
-  { date: '2026-10-20', name: 'Dussehra' }, // Estimated
-  { date: '2026-11-08', name: 'Diwali' }, // Estimated
+  { date: '2026-09-04', name: 'Janmashtami' },
+  { date: '2026-09-15', name: 'Samvatsari (Chaturthi Paksha)' },
+  { date: '2026-10-02', name: "Mahatma Gandhi's Birthday" },
+  { date: '2026-10-20', name: 'Dusshera (Vijaya Dashmi)' },
+  { date: '2026-10-31', name: "Sardar Vallabhbhai Patel's Birthday" },
+  { date: '2026-11-10', name: 'Vikram Samvant New Year Day' },
+  { date: '2026-11-11', name: 'Bhai Bij' },
+  { date: '2026-11-24', name: "Guru Nanak's Birthday" },
   { date: '2026-12-25', name: 'Christmas' },
 ];
 
