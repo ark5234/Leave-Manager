@@ -163,40 +163,40 @@ export default function Home() {
                 <p className="text-gray-500 dark:text-slate-300 text-sm mt-1">Plan your internship attendance wisely. (Sandwich rules active)</p>
             </div>
             
-            <div className="flex items-center gap-3 w-full md:w-auto">
-                <div className="flex items-center gap-3 bg-gray-50 dark:bg-slate-700 p-2 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm flex-1 sm:flex-none">
-                    <div className="flex items-center gap-2 px-2">
-                        <CalendarIcon className="w-5 h-5 text-indigo-600" />
-                        <div className="flex flex-col">
-                            <label className="text-[10px] text-gray-500 dark:text-slate-300 font-semibold uppercase">Start</label>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center justify-between gap-1 sm:gap-3 bg-gray-50 dark:bg-slate-700 p-2 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm flex-1 sm:flex-none">
+                    <div className="flex items-center gap-1 sm:gap-2 px-1 sm:px-2 flex-1">
+                        <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
+                        <div className="flex flex-col w-full">
+                            <label className="text-[9px] sm:text-[10px] text-gray-500 dark:text-slate-300 font-semibold uppercase">Start</label>
                             <input
                                 type="date"
                                 value={startDate}
                                 onChange={(e) => setStartDate(e.target.value)}
-                                className="bg-transparent text-sm font-medium focus:outline-none text-slate-800 dark:text-slate-100"
+                                className="bg-transparent text-xs sm:text-sm font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full"
                                 title="Select start date"
                             />
                         </div>
                     </div>
-                    <div className="w-px h-8 bg-gray-200 dark:bg-slate-600 mx-2"></div>
-                    <div className="flex items-center gap-2 px-2">
-                        <div className="flex flex-col">
-                            <label className="text-[10px] text-gray-500 dark:text-slate-300 font-semibold uppercase">End</label>
+                    <div className="w-px h-8 bg-gray-200 dark:bg-slate-600 mx-1 sm:mx-2"></div>
+                    <div className="flex items-center gap-1 sm:gap-2 px-1 sm:px-2 flex-1">
+                        <div className="flex flex-col w-full">
+                            <label className="text-[9px] sm:text-[10px] text-gray-500 dark:text-slate-300 font-semibold uppercase">End</label>
                             <input
                                 type="date"
                                 value={endDate}
                                 onChange={(e) => setEndDate(e.target.value)}
-                                className="bg-transparent text-sm font-medium focus:outline-none text-slate-800 dark:text-slate-100"
+                                className="bg-transparent text-xs sm:text-sm font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full"
                                 title="Select end date"
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between sm:justify-start gap-2">
                     <button
                         type="button"
-                        className="text-xs px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        className="text-xs px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex-1 sm:flex-none whitespace-nowrap"
                         onClick={async () => {
                             const ok = typeof window !== 'undefined' && confirm('Reset all saved leaves? This will clear LocalStorage and cannot be undone.');
                             if (!ok) return;
@@ -235,9 +235,9 @@ export default function Home() {
         </div>
 
         {/* Stats Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
             <StatsCard 
-                label="Attendance Score" 
+                label="Attendance" 
                 value={`${stats.percentage}%`} 
                 subtext={parseFloat(stats.percentage) >= 80 ? "You are safe (Target: 80%)" : "Warning: Below limit!"}
                 color={parseFloat(stats.percentage) >= 80 ? "text-green-600" : "text-red-600"}
@@ -304,14 +304,14 @@ type StatsCardProps = {
 };
 function StatsCard({ label, value, subtext, color, icon }: StatsCardProps) {
     return (
-        <div className="bg-white dark:bg-slate-800 p-5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-800 p-3 sm:p-5 rounded-xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col justify-between h-full">
             <div className={`flex justify-between items-start ${color}`}>
-                <div className="font-semibold">{label}</div>
-                {icon}
+                <div className="font-semibold text-xs sm:text-base">{label}</div>
+                <div className="scale-75 sm:scale-100 origin-top-right">{icon}</div>
             </div>
-            <div className="mt-4">
-                <div className="text-3xl font-bold text-gray-900 dark:text-slate-100">{value}</div>
-                <div className="text-xs text-gray-500 dark:text-slate-300 mt-1">{subtext}</div>
+            <div className="mt-2 sm:mt-4">
+                <div className="text-xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100">{value}</div>
+                <div className="text-[10px] sm:text-xs text-gray-500 dark:text-slate-300 mt-1 leading-tight">{subtext}</div>
             </div>
         </div>
     )
