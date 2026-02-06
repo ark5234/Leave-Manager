@@ -1,3 +1,48 @@
+# Leave Manager
+
+A lightweight internship attendance planner with sandwich-leave rules and a visual calendar.
+
+## Features
+- Visual calendar to mark days as Present / Full Leave / Half Leave (morning/afternoon)
+- Sandwich leave detection: weekends/holidays between leaves count as full leave
+- Safe Buffer counter showing how many full-day leaves you can take before dropping below 80%
+- Pre-filled Gujarat / National holidays and 2nd/4th Saturday handling
+- Simple local JSON storage (dev) with a Prisma schema ready in `prisma/` (optional)
+
+## Tech Stack
+- Next.js (App Router, TypeScript)
+- Tailwind CSS
+- Prisma (SQLite) schema included; during development the app uses a JSON file store at `src/data/records.json`
+- date-fns for date handling
+
+## Quick Start
+1. Install dependencies
+
+```bash
+cd web-app
+npm install
+```
+
+2. Generate Prisma client (optional, only if you want to use Prisma DB instead of local JSON)
+
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+3. Run dev server
+
+```bash
+npm run dev
+# open http://localhost:3000
+```
+
+## Notes
+- By default the API uses a file-based store at `src/data/records.json` so you can run the app without configuring a database. To restore Prisma-backed persistence, update `src/app/api/records/route.ts` to use `src/lib/prisma.ts` and ensure `DATABASE_URL` is set in `.env`.
+- If you see React hydration warnings in development caused by browser extensions (e.g., Grammarly), either disable the extension or accept the benign warning — a temporary `suppressHydrationWarning` was added to `src/app/layout.tsx` to reduce console noise.
+
+## License
+MIT
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
