@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readRecords, upsertRecord, deleteRecord } from '@/lib/storage';
+import { readRecords, upsertRecord, deleteRecord } from '../../../lib/storage';
 
 export async function GET() {
   try {
