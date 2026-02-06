@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import { calculateAttendance, getStats, DayInfo, UserRecord } from '@/lib/attendance';
-import { readRecords, upsertRecord, deleteRecord } from '@/lib/localStore';
+import { readRecords, upsertRecord, deleteRecord, clearAll } from '@/lib/localStore';
 import { Calendar as CalendarIcon, AlertCircle, CheckCircle, XCircle, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -11,7 +11,6 @@ export default function Home() {
   const [startDate, setStartDate] = useState(new Date().getFullYear() + '-01-01');
   const [endDate, setEndDate] = useState(new Date().getFullYear() + '-12-31');
   const [records, setRecords] = useState<UserRecord[]>([]);
-    const [transientRecords, setTransientRecords] = useState<UserRecord[]>([]); // for non-persistent simulation
   const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -38,19 +37,10 @@ export default function Home() {
         return () => { mounted = false; };
     }, []);
 
-    // Combine persisted records with transient (simulation) records.
-    const combinedRecords = useMemo(() => {
-        const map = new Map<string, UserRecord>();
-        const keyOf = (d: string | Date) => new Date(d).toISOString().slice(0,10);
-        records.forEach(r => map.set(keyOf(r.date), r));
-        transientRecords.forEach(r => map.set(keyOf(r.date), r)); // transient overrides persisted
-        return Array.from(map.values());
-    }, [records, transientRecords]);
-
-    const timeline = useMemo(() => {
-        if (!startDate || !endDate) return [];
-        return calculateAttendance(new Date(startDate), new Date(endDate), combinedRecords);
-    }, [startDate, endDate, combinedRecords]);
+  const timeline = useMemo(() => {
+    if (!startDate || !endDate) return [];
+    return calculateAttendance(new Date(startDate), new Date(endDate), records);
+  }, [startDate, endDate, records]);
 
   const stats = useMemo(() => getStats(timeline), [timeline]);
 
@@ -167,28 +157,18 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                     <button
                         type="button"
-                        className="text-xs px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                        onClick={() => setEndDate(new Date().toISOString().slice(0,10))}
-                    >
-                        End = Today
-                    </button>
-                    <button
-                        type="button"
-                        className={clsx("text-xs px-2 py-1 rounded-md border", transientRecords.length ? 'bg-amber-100 border-amber-300' : 'bg-white')}
-                        onClick={() => {
-                            // toggle simulate leave today (non-persistent)
-                            const todayIso = new Date().toISOString().slice(0,10);
-                            const exists = transientRecords.find(r => new Date(r.date).toISOString().slice(0,10) === todayIso);
-                            if (exists) {
-                                setTransientRecords(prev => prev.filter(r => new Date(r.date).toISOString().slice(0,10) !== todayIso));
-                            } else {
-                                setTransientRecords(prev => [...prev, { date: new Date().toISOString(), status: 'LEAVE_FULL' }]);
-                            }
+                        className="text-xs px-2 py-1 bg-red-600 text-white rounded-md hover:bg-red-700"
+                        onClick={async () => {
+                            const ok = typeof window !== 'undefined' && confirm('Reset all saved leaves? This will clear LocalStorage and cannot be undone.');
+                            if (!ok) return;
+                            await clearAll();
+                            setRecords([]);
                         }}
                     >
-                        {transientRecords.some(r => new Date(r.date).toISOString().slice(0,10) === new Date().toISOString().slice(0,10)) ? 'Clear Simulation' : 'Simulate Leave Today'}
+                        Reset Leaves
                     </button>
                 </div>
+                
             </div>
         </div>
 
