@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { format, startOfMonth, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import { calculateAttendance, getStats, DayInfo, UserRecord } from '@/lib/attendance';
-import { readRecords, upsertRecord, deleteRecord } from '@/lib/localStore';
+import { readRecords, upsertRecord, deleteRecord, clearAll } from '@/lib/localStore';
 import { Calendar as CalendarIcon, AlertCircle, CheckCircle, XCircle, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
