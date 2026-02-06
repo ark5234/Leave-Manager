@@ -6,6 +6,23 @@ A lightweight web app to plan and calculate internship attendance with support f
 - **Local page**: Open the app via `npm run dev` and visit `http://localhost:3000`.
 - **Code**: Main UI is in `src/app/page.tsx`. Attendance logic is in `src/lib/attendance.ts`.
 
+Live demo
+---------
+
+The app is deployed on Vercel. Known deployment domains for this project:
+
+- leave-manager-r7gmnbpjl-vikrant-kawadkars-projects.vercel.app
+- leave-manager-five.vercel.app
+
+If a link from GitHub opens to a `404: NOT_FOUND (DEPLOYMENT_NOT_FOUND)` error, it's likely pointing to a preview deployment that has expired or to an incorrect URL. To fix the GitHub repo link:
+
+1. Open your repository on GitHub.
+2. On the right sidebar (About), click the gear icon next to **Website**.
+3. Paste the production domain (for example `https://leave-manager-five.vercel.app`) and save.
+
+Alternatively, update the live-demo link in this README to the correct domain. The README below includes instructions and the primary Vercel domain.
+
+
 **Features**
 - **Attendance rules**: 80% target calculation, safe-buffer days, half-day semantics.
 - **Sandwich rule**: Holidays/weekends that are bracketed by user leaves are marked as `SANDWICH_LEAVE` and treated as penalized leave.
