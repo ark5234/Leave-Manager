@@ -283,8 +283,8 @@ export default function Home() {
                 {/* What-if Preview: simulate taking additional leaves */}
                 <div className="mt-3 flex items-start gap-3">
                     <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium">Simulate additional leaves:</label>
-                        <select value={previewCount} onChange={(e) => setPreviewCount(Number(e.target.value))} className="border rounded px-2 py-1">
+                        <label htmlFor="preview-select" className="text-sm font-medium">Simulate additional leaves:</label>
+                        <select id="preview-select" aria-label="Simulate additional leaves" title="Select number of additional leave days to simulate" value={previewCount} onChange={(e) => setPreviewCount(Number(e.target.value))} className="border rounded px-2 py-1">
                             <option value={1}>+1 day</option>
                             <option value={0.5}>+0.5 day</option>
                             <option value={2}>+2 days</option>

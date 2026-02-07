@@ -52,6 +52,10 @@ The system calculates attendance dynamically based on your records:
     
     > **Note:** Converting a past "Present" day to a "Leave" deplete your buffer faster (~1.25 days cost) than taking a new leave (1.0 day cost), because you lose the accumulated work credit while also adding a deficit.
 
+## Interactive Preview
+
+The app includes a "What-if" preview that lets you simulate taking additional future leave days. The preview shows the projected attendance percentage and the projected safe buffer after adding the specified number of leave days. This helps you decide whether taking another leave will push you below the 80% target.
+
 ## Getting Started
 
 ### Prerequisites
