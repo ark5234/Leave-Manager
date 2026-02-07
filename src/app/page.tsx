@@ -12,7 +12,9 @@ export default function Home() {
     const [endDate, setEndDate] = useState('');
   const [records, setRecords] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
-    const [dark, setDark] = useState(false);
+        const [dark, setDark] = useState(false);
+        const [showPreview, setShowPreview] = useState(false);
+        const [previewCount, setPreviewCount] = useState(1);
 
     useEffect(() => {
         let mounted = true;
@@ -67,6 +69,18 @@ export default function Home() {
     }, [startDate, endDate, records]);
 
   const stats = useMemo(() => getStats(timeline), [timeline]);
+
+    const preview = useMemo(() => {
+        const add = previewCount;
+        const newWorking = stats.workingDays + add;
+        const newPercentage = newWorking === 0 ? 100 : (stats.presentDays / newWorking) * 100;
+        const newBufferRaw = (stats.presentDays / 0.8) - newWorking;
+        const newBuffer = newBufferRaw < 0 ? 0 : Math.round(newBufferRaw * 100) / 100;
+        return {
+            newPercentage: newPercentage.toFixed(2),
+            newBuffer
+        };
+    }, [stats, previewCount]);
 
     const handleDayClick = async (day: DayInfo) => {
 
@@ -265,6 +279,25 @@ export default function Home() {
                 icon={<Clock className="w-5 h-5" />}
             />
         </div>
+
+                {/* What-if Preview: simulate taking additional leaves */}
+                <div className="mt-3 flex items-start gap-3">
+                    <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium">Simulate additional leaves:</label>
+                        <select value={previewCount} onChange={(e) => setPreviewCount(Number(e.target.value))} className="border rounded px-2 py-1">
+                            <option value={1}>+1 day</option>
+                            <option value={0.5}>+0.5 day</option>
+                            <option value={2}>+2 days</option>
+                        </select>
+                        <button onClick={() => setShowPreview(s => !s)} className="ml-2 px-3 py-1 bg-indigo-600 text-white rounded">What if?</button>
+                    </div>
+                    {showPreview && (
+                        <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+                            <div className="text-sm">Projected Attendance: <span className="font-bold">{preview.newPercentage}%</span></div>
+                            <div className="text-sm">Projected Safe Buffer: <span className="font-bold">{preview.newBuffer} Days</span></div>
+                        </div>
+                    )}
+                </div>
 
         {/* Legends */}
         <div className="flex flex-wrap gap-4 text-sm bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700">

@@ -183,13 +183,14 @@ export function getStats(timeline: DayInfo[]) {
   // X <= (Present - 0.8 * Working) / 0.8
   // X <= (Present / 0.8) - Working
   
-  const buffer = Math.floor((presentDays / 0.8) - workingDays);
+  const bufferRaw = (presentDays / 0.8) - workingDays;
+  const buffer = bufferRaw < 0 ? 0 : Math.round(bufferRaw * 100) / 100; // keep two decimals
 
   return {
     percentage: percentage.toFixed(2),
     presentDays,
     leaves,
     workingDays,
-    buffer: buffer < 0 ? 0 : buffer
+    buffer
   };
 }
