@@ -28,6 +28,30 @@ Attendance tracker and leave management system built for interns and employees. 
 - **State Management:** React Hooks & Context
 - **Persistence:** LocalStorage (Client-side)
 
+## Logic & Math
+
+### Attendance Calculation
+
+The system calculates attendance dynamically based on your records:
+
+1.  **Working Days Definition:**
+    $$ \text{Working Days} = \text{Present Days} + \text{Leaves (Full + Half + Sandwich)} $$
+    *(Holidays and Weekends are excluded unless a Sandwich penalty forces them to count as leaves)*
+
+2.  **Attendance Percentage:**
+    $$ \text{Percentage} = \left( \frac{\text{Weighted Present Days}}{\text{Working Days}} \right) \times 100 $$
+    
+    - **Present Day:** +1 Present, +1 Working
+    - **Half Day Leave:** +0.5 Present, +1 Working (0.5 Leave)
+    - **Full Day Leave:** +0 Present, +1 Working
+    - **Sandwich Leave:** +0 Present, +1 Working (Penalty applied to a holiday)
+
+3.  **Safe Buffer:**
+    Calculates how many *additional future leaves* you can take before dropping below 80%.
+    $$ \text{Buffer} = \left\lfloor \frac{\text{Present Days}}{0.8} - \text{Working Days} \right\rfloor $$
+    
+    > **Note:** Converting a past "Present" day to a "Leave" deplete your buffer faster (~1.25 days cost) than taking a new leave (1.0 day cost), because you lose the accumulated work credit while also adding a deficit.
+
 ## Getting Started
 
 ### Prerequisites

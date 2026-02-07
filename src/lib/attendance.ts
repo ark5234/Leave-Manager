@@ -161,9 +161,13 @@ export function getStats(timeline: DayInfo[]) {
   // A Sandwich Leave makes a Holiday "Scheduled but Absent".
   // So effective "Working Opportunities" = Present + All Leaves (including Sandwich).
   
-  const presentDays = timeline.filter(d => d.status === 'PRESENT').length;
+  const presentDays = timeline.reduce((acc, d) => {
+    if (d.status === 'PRESENT') return acc + 1;
+    if (d.status === 'LEAVE_HALF') return acc + 0.5;
+    return acc;
+  }, 0);
   const leaves = timeline.reduce((acc, d) => acc + d.leaveAmount, 0);
-  
+
   // Working Days defined as: Days meant to be worked (Present) + Days missed (Leaves).
   // Days that are OFF and NOT Sandwich are excluded.
   const workingDays = presentDays + leaves; 

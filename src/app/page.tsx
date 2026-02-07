@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { format, startOfMonth, isSameMonth, isSameDay, addMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths } from 'date-fns';
 import { calculateAttendance, getStats, DayInfo, UserRecord } from '@/lib/attendance';
 import { readRecords, upsertRecord, deleteRecord, clearAll } from '@/lib/localStore';
 import { Calendar as CalendarIcon, AlertCircle, CheckCircle, XCircle, Clock, Moon, Sun } from 'lucide-react';
@@ -331,8 +331,11 @@ function LegendItem({ color, label }: LegendItemProps) {
 }
 
 function MonthGrid({ monthStart, timeline, onDayClick }: { monthStart: Date, timeline: DayInfo[], onDayClick: (d: DayInfo) => void }) {
-    const monthDays = timeline.filter(d => isSameMonth(d.date, monthStart));
-    const startOffset = monthStart.getDay(); // 0 is Sunday
+    const daysInMonth = eachDayOfInterval({
+        start: startOfMonth(monthStart),
+        end: endOfMonth(monthStart)
+    });
+    const startOffset = startOfMonth(monthStart).getDay(); // 0 is Sunday
     const blanks = Array(startOffset).fill(null);
 
     return (
@@ -345,9 +348,18 @@ function MonthGrid({ monthStart, timeline, onDayClick }: { monthStart: Date, tim
             </div>
             <div className="grid grid-cols-7 p-2 gap-1 bg-white dark:bg-slate-800">
                 {blanks.map((_, i) => <div key={`blank-${i}`} />)}
-                {monthDays.map((day) => (
-                    <DayCell key={day.date.toISOString()} day={day} onClick={() => onDayClick(day)} />
-                ))}
+                {daysInMonth.map((date) => {
+                    const dayInfo = timeline.find(d => isSameDay(d.date, date));
+                    if (dayInfo) {
+                        return <DayCell key={date.toISOString()} day={dayInfo} onClick={() => onDayClick(dayInfo)} />;
+                    } else {
+                        return (
+                            <div key={date.toISOString()} className="h-12 sm:h-14 rounded-lg flex flex-col items-center justify-center text-xs sm:text-sm text-gray-300 dark:text-slate-600 border border-transparent">
+                                {date.getDate()}
+                            </div>
+                        );
+                    }
+                })}
             </div>
         </div>
     )
