@@ -10,11 +10,11 @@ import clsx from 'clsx';
 export default function Home() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-  const [records, setRecords] = useState<UserRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-        const [dark, setDark] = useState(false);
-        const [showPreview, setShowPreview] = useState(false);
-        const [previewCount, setPreviewCount] = useState(1);
+    const [records, setRecords] = useState<UserRecord[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [dark, setDark] = useState(false);
+    const [showPreview, setShowPreview] = useState(false);
+    const [previewCount, setPreviewCount] = useState(1);
 
     useEffect(() => {
         let mounted = true;
@@ -68,13 +68,17 @@ export default function Home() {
         return calculateAttendance(visibleStart, visibleEnd, records);
     }, [startDate, endDate, records]);
 
-  const stats = useMemo(() => getStats(timeline), [timeline]);
+    const stats = useMemo(() => getStats(timeline), [timeline]);
 
     const preview = useMemo(() => {
-        const add = previewCount;
-        const newWorking = stats.workingDays + add;
-        const newPercentage = newWorking === 0 ? 100 : (stats.presentDays / newWorking) * 100;
-        const newBufferRaw = (stats.presentDays / 0.8) - newWorking;
+        const leaveCost = previewCount; 
+        const newPresentDays = stats.presentDays - leaveCost;
+        const totalWorking = stats.workingDays;
+
+        const newPercentage = totalWorking === 0 ? 100 : (newPresentDays / totalWorking) * 100;
+    
+        const newBufferRaw = newPresentDays - (totalWorking * 0.8);
+    
         const newBuffer = newBufferRaw < 0 ? 0 : Math.round(newBufferRaw * 100) / 100;
         return {
             newPercentage: newPercentage.toFixed(2),
