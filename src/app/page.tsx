@@ -50,7 +50,12 @@ export default function Home() {
   const [endDate, setEndDate] = useState('');
   const [records, setRecords] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dark, setDark] = useState(false);
+  // Initialise dark mode synchronously from localStorage — avoids calling
+  // setState inside an effect and prevents the flash-of-wrong-theme.
+  const [dark, setDark] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('lm:theme') === 'dark';
+  });
   const [showPreview, setShowPreview] = useState(false);
   const [previewCount, setPreviewCount] = useState(1);
   const [viewAdminUid, setViewAdminUid] = useState<string | null>(null);
@@ -59,32 +64,40 @@ export default function Home() {
   const activeUid = viewAdminUid ?? user?.uid ?? null;
   const isViewingOtherUser = isAdmin && viewAdminUid !== null && viewAdminUid !== user?.uid;
 
+  // Apply dark class whenever `dark` changes (no setState here — read-only DOM write).
   useEffect(() => {
-    const saved = typeof window !== 'undefined' && window.localStorage.getItem('lm:theme');
-    if (saved === 'dark') { setDark(true); document.documentElement.className = 'dark'; }
-    else { setDark(false); document.documentElement.className = ''; }
-  }, []);
+    document.documentElement.className = dark ? 'dark' : '';
+  }, [dark]);
 
-  // Load records (and dates for the logged-in user, not an admin-viewed user)
+  // Load records + internship dates.
+  // Dependency is on user.uid and viewAdminUid so we re-fetch when admin switches user.
   useEffect(() => {
-    if (!activeUid) { setLoading(false); return; }
+    if (!user) return; // LoginScreen shown above — no setState needed here
+    const uid = user.uid;
     let mounted = true;
     (async () => {
       setLoading(true);
-      const [fetched, dates] = await Promise.all([
-        readRecords(activeUid),
-        // Only load own dates, not when admin is viewing another user
-        !isViewingOtherUser && user ? getInternshipDates(user.uid) : Promise.resolve({ internshipStart: '', internshipEnd: '' }),
-      ]);
-      if (mounted) {
-        setRecords(fetched);
-        if (!isViewingOtherUser && dates.internshipStart) setStartDate(dates.internshipStart);
-        if (!isViewingOtherUser && dates.internshipEnd) setEndDate(dates.internshipEnd);
-        setLoading(false);
+      try {
+        const [fetched, dates] = await Promise.all([
+          readRecords(activeUid ?? uid),
+          // Only load own dates, not when admin is viewing another user
+          !isViewingOtherUser ? getInternshipDates(uid) : Promise.resolve({ internshipStart: '', internshipEnd: '' }),
+        ]);
+        if (mounted) {
+          setRecords(fetched);
+          if (!isViewingOtherUser) {
+            if (dates.internshipStart) setStartDate(dates.internshipStart);
+            if (dates.internshipEnd) setEndDate(dates.internshipEnd);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load data from Firestore:', err);
+      } finally {
+        if (mounted) setLoading(false);
       }
     })();
     return () => { mounted = false; };
-  }, [activeUid]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user?.uid, viewAdminUid]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save internship dates to Firestore whenever they change
   useEffect(() => {
@@ -250,7 +263,10 @@ export default function Home() {
               <ShieldCheck className="w-4 h-4" />
               Admin View
             </div>
-            <select value={viewAdminUid ?? user.uid} onChange={(e) => setViewAdminUid(e.target.value === user.uid ? null : e.target.value)}
+            <select
+              aria-label="Select user to view"
+              title="Select user to view"
+              value={viewAdminUid ?? user.uid} onChange={(e) => setViewAdminUid(e.target.value === user.uid ? null : e.target.value)}
               className="border rounded px-3 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-amber-300 dark:border-amber-600">
               <option value={user.uid}>Your own records</option>
               {adminUsers.filter(u => u.uid !== user.uid).map(u => (
