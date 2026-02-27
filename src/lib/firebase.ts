@@ -1,9 +1,24 @@
-import { initializeApp, getApps } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
+const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+
+if (!apiKey) {
+  // This will only be hit during SSR/build if env vars aren't configured on the
+  // deployment platform. Add them in your Vercel / hosting dashboard.
+  if (typeof window === 'undefined') {
+    // Server-side: silently skip — pages are client-only anyway
+  } else {
+    console.error(
+      '[Firebase] NEXT_PUBLIC_FIREBASE_API_KEY is not set. ' +
+      'Add your Firebase environment variables to your deployment platform.'
+    );
+  }
+}
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  apiKey,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
   storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
@@ -11,7 +26,10 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Only initialize if the key is present (prevents build-time crash)
+const app = apiKey
+  ? (getApps().length === 0 ? initializeApp(firebaseConfig) : getApp())
+  : (getApps().length > 0 ? getApp() : initializeApp({ apiKey: 'placeholder', projectId: 'placeholder', appId: 'placeholder' }));
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
