@@ -111,3 +111,28 @@ export async function getAllUserProfiles(): Promise<UserProfile[]> {
 export async function readRecordsForUser(uid: string): Promise<UserRecord[]> {
   return readRecords(uid);
 }
+
+// --------------- Internship Date Range ---------------
+
+export type InternshipDates = {
+  internshipStart?: string; // YYYY-MM-DD
+  internshipEnd?: string;   // YYYY-MM-DD
+};
+
+/** Persist the internship start/end dates on the user's profile document */
+export async function saveInternshipDates(uid: string, dates: InternshipDates): Promise<void> {
+  const ref = doc(db, 'users', uid);
+  await setDoc(ref, dates, { merge: true });
+}
+
+/** Load the internship start/end dates from the user's profile document */
+export async function getInternshipDates(uid: string): Promise<InternshipDates> {
+  const ref = doc(db, 'users', uid);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return {};
+  const d = snap.data();
+  return {
+    internshipStart: d.internshipStart ?? '',
+    internshipEnd: d.internshipEnd ?? '',
+  };
+}

@@ -10,6 +10,8 @@ import {
   clearAll,
   getAllUserProfiles,
   UserProfile,
+  getInternshipDates,
+  saveInternshipDates,
 } from '@/lib/firebaseStore';
 import { useAuth } from '@/context/AuthContext';
 import { Calendar as CalendarIcon, AlertCircle, CheckCircle, XCircle, Clock, Moon, Sun, LogOut, ShieldCheck, UserCircle } from 'lucide-react';
@@ -63,16 +65,38 @@ export default function Home() {
     else { setDark(false); document.documentElement.className = ''; }
   }, []);
 
+  // Load records (and dates for the logged-in user, not an admin-viewed user)
   useEffect(() => {
     if (!activeUid) { setLoading(false); return; }
     let mounted = true;
     (async () => {
       setLoading(true);
-      const fetched = await readRecords(activeUid);
-      if (mounted) { setRecords(fetched); setLoading(false); }
+      const [fetched, dates] = await Promise.all([
+        readRecords(activeUid),
+        // Only load own dates, not when admin is viewing another user
+        !isViewingOtherUser && user ? getInternshipDates(user.uid) : Promise.resolve({ internshipStart: '', internshipEnd: '' }),
+      ]);
+      if (mounted) {
+        setRecords(fetched);
+        if (!isViewingOtherUser && dates.internshipStart) setStartDate(dates.internshipStart);
+        if (!isViewingOtherUser && dates.internshipEnd) setEndDate(dates.internshipEnd);
+        setLoading(false);
+      }
     })();
     return () => { mounted = false; };
-  }, [activeUid]);
+  }, [activeUid]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-save internship dates to Firestore whenever they change
+  useEffect(() => {
+    if (!user || isViewingOtherUser || (!startDate && !endDate)) return;
+    const t = setTimeout(() => {
+      saveInternshipDates(user.uid, {
+        internshipStart: startDate,
+        internshipEnd: endDate,
+      });
+    }, 800); // debounce to avoid a write on every keystroke
+    return () => clearTimeout(t);
+  }, [startDate, endDate, user, isViewingOtherUser]);
 
   useEffect(() => {
     if (!isAdmin) return;
