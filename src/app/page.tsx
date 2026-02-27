@@ -93,7 +93,7 @@ export default function Home() {
     return calculateAttendance(visibleStart, visibleEnd, records);
   }, [startDate, endDate, records]);
 
-  const stats = useMemo(() => getStats(timeline), [timeline]);
+    const stats = useMemo(() => getStats(timeline), [timeline]);
 
   const preview = useMemo(() => {
     const add = previewCount;

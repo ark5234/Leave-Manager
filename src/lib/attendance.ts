@@ -16,7 +16,7 @@ export type DayInfo = {
   originalStatus?: string;
 };
 
-// Mock Gujarat/National Holidays for 2026 (and late 2025)
+// Mock Gujarat/National Holidays for 2026
 export const HOLIDAYS = [
   { date: '2026-01-14', name: 'Makar Sankranti' },
   { date: '2026-01-26', name: 'Republic Day' },
@@ -83,17 +83,10 @@ export function calculateAttendance(
       } else if (record.status.startsWith('LEAVE_HALF')) {
         status = 'LEAVE_HALF';
         leaveAmount = 0.5;
-        // Even if it was a holiday, user 'took leave'? Usually user record overrides holiday.
       } else if (record.status === 'PRESENT') {
         status = 'PRESENT';
         leaveAmount = 0;
       }
-    } else {
-        // No record.
-        // If it's OFF -> OFF.
-        // If it's Work -> PRESENT (Assuming default presence for past? Or Future?)
-        // Requirement: "calculate when to take a leave".
-        // Implicitly, future days with no record are 'Working' days that you *will* attend unless marked otherwise.
     }
 
     return {
@@ -108,17 +101,9 @@ export function calculateAttendance(
     };
   });
 
-  // 2. Sandwich Pass: "If I take leave on Sat, and Mon, Sun is leave".
-  // Definition: A sequence of OFF days that is immediately preceded AND followed by a LEAVE (Full or Half).
-  // Iterate through the timeline.
-  
-  // We need to identify sequences of "OFF" (that are not already user-leaves).
-  // Note: user might set a record on a holiday? If so, it's LEAVE_FULL, not OFF.
-  // So we assume OFF means "System generated Holiday/Weekend with no user override".
-
+  // 2. Sandwich Pass
   for (let i = 0; i < timeline.length; i++) {
     if (timeline[i].status === 'OFF') {
-      // Start of an OFF sequence?
       let j = i;
       while (j < timeline.length && timeline[j].status === 'OFF') {
         j++;
@@ -137,7 +122,6 @@ export function calculateAttendance(
 
       if (hasPrev && hasNext && prevIsLeave && nextIsLeave) {
         // Trigger Sandwich! 
-        // All days from i to j-1 become SANDWICH_LEAVE
         for (let k = i; k < j; k++) {
           timeline[k].status = 'SANDWICH_LEAVE';
           timeline[k].isSandwich = true;
@@ -145,7 +129,6 @@ export function calculateAttendance(
         }
       }
 
-      // Advance i to j-1 (loop increment will do i++)
       i = j - 1;
     }
   }
@@ -154,43 +137,43 @@ export function calculateAttendance(
 }
 
 export function getStats(timeline: DayInfo[]) {
-  // const totalDays = timeline.length;
-  // Denominator: Total Working Days (Assuming sandwich days count as they 'should have been' working days? Or just penalty?)
-  // Standard: Percentage = Present / (Total Scheduled - Excused).
-  // A Leave makes a day "Scheduled but Absent".
-  // A Sandwich Leave makes a Holiday "Scheduled but Absent".
-  // So effective "Working Opportunities" = Present + All Leaves (including Sandwich).
-  
+  // 1. Calculate Present Days
   const presentDays = timeline.reduce((acc, d) => {
     if (d.status === 'PRESENT') return acc + 1;
     if (d.status === 'LEAVE_HALF') return acc + 0.5;
     return acc;
   }, 0);
+
+  // 2. Calculate Leaves Taken
   const leaves = timeline.reduce((acc, d) => acc + d.leaveAmount, 0);
 
-  // Working Days defined as: Days meant to be worked (Present) + Days missed (Leaves).
-  // Days that are OFF and NOT Sandwich are excluded.
+  // 3. Total Working Days
+  // Since 'PRESENT' is the default for any non-OFF day, 'workingDays'
+  // represents the total capacity of the selected range.
   const workingDays = presentDays + leaves; 
   
-  // Percentage
+  // 4. Percentage
   const percentage = workingDays === 0 ? 100 : (presentDays / workingDays) * 100;
   
-  // Buffer Calculation:
-  // How many regular leaves (1 day) can I take before dropping below 80%?
-  // Solve for X: (Present) / (Working + X) >= 0.8
-  // Present >= 0.8 * Working + 0.8 * X
-  // Present - 0.8 * Working >= 0.8 * X
-  // X <= (Present - 0.8 * Working) / 0.8
-  // X <= (Present / 0.8) - Working
+  // 5. Buffer Calculation (CORRECTED)
+  // Formula: Buffer = ActualPresent - (TotalWorking * 0.8)
+  // This tells you how many present days are "surplus" above the 80% line.
   
-  const bufferRaw = (presentDays / 0.8) - workingDays;
-  const buffer = bufferRaw < 0 ? 0 : Math.round(bufferRaw * 100) / 100; // keep two decimals
+  const requiredPresent = workingDays * 0.8;
+  const bufferRaw = presentDays - requiredPresent;
+  
+  const buffer = Math.round(bufferRaw * 100) / 100; // Round to 2 decimals
+
+  // If buffer is negative, it means we are below 80%, so safe buffer is 0 (or negative to show deficit)
+  // Your UI treats it as "Safe Buffer", so typically we clamp to 0, 
+  // but mathematically negative buffer means "Days you strictly need to recover".
+  const safeBuffer = buffer < 0 ? 0 : buffer;
 
   return {
     percentage: percentage.toFixed(2),
     presentDays,
     leaves,
     workingDays,
-    buffer
+    buffer: safeBuffer
   };
 }
