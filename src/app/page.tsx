@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths } from 'date-fns';
 import { calculateAttendance, getStats, DayInfo, UserRecord } from '@/lib/attendance';
 import {
@@ -60,6 +60,10 @@ export default function Home() {
   const [previewCount, setPreviewCount] = useState(1);
   const [viewAdminUid, setViewAdminUid] = useState<string | null>(null);
   const [adminUsers, setAdminUsers] = useState<UserProfile[]>([]);
+  // Tracks whether we've finished loading dates from Firestore.
+  // Auto-save is blocked until this is true to prevent overwriting
+  // loaded values with empty strings during the initial render.
+  const datesLoaded = useRef(false);
 
   const activeUid = viewAdminUid ?? user?.uid ?? null;
   const isViewingOtherUser = isAdmin && viewAdminUid !== null && viewAdminUid !== user?.uid;
@@ -74,6 +78,8 @@ export default function Home() {
   useEffect(() => {
     if (!user) return; // LoginScreen shown above — no setState needed here
     const uid = user.uid;
+    // Reset so auto-save won't fire until this load completes
+    datesLoaded.current = false;
     let mounted = true;
     (async () => {
       setLoading(true);
@@ -86,12 +92,16 @@ export default function Home() {
         if (mounted) {
           setRecords(fetched);
           if (!isViewingOtherUser) {
-            if (dates.internshipStart) setStartDate(dates.internshipStart);
-            if (dates.internshipEnd) setEndDate(dates.internshipEnd);
+            // Set BOTH dates together before unblocking auto-save
+            setStartDate(dates.internshipStart ?? '');
+            setEndDate(dates.internshipEnd ?? '');
           }
+          // Only allow auto-save after the load is fully done
+          datesLoaded.current = true;
         }
       } catch (err) {
         console.error('Failed to load data from Firestore:', err);
+        datesLoaded.current = true; // unblock even on error
       } finally {
         if (mounted) setLoading(false);
       }
@@ -99,15 +109,18 @@ export default function Home() {
     return () => { mounted = false; };
   }, [user?.uid, viewAdminUid]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-save internship dates to Firestore whenever they change
+  // Auto-save internship dates to Firestore whenever they change.
+  // datesLoaded.current guards against overwriting Firestore with empty strings
+  // before the initial load has completed.
   useEffect(() => {
-    if (!user || isViewingOtherUser || (!startDate && !endDate)) return;
+    if (!user || isViewingOtherUser || !datesLoaded.current) return;
+    if (!startDate && !endDate) return;
     const t = setTimeout(() => {
       saveInternshipDates(user.uid, {
         internshipStart: startDate,
         internshipEnd: endDate,
       });
-    }, 800); // debounce to avoid a write on every keystroke
+    }, 800);
     return () => clearTimeout(t);
   }, [startDate, endDate, user, isViewingOtherUser]);
 
