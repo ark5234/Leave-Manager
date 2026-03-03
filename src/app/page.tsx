@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, parseISO } from 'date-fns';
 import { calculateAttendance, getStats, DayInfo, UserRecord } from '@/lib/attendance';
 import {
   readRecords,
@@ -12,9 +12,11 @@ import {
   UserProfile,
   getInternshipDates,
   saveInternshipDates,
+  readNotes,
+  saveNote,
 } from '@/lib/firebaseStore';
 import { useAuth } from '@/context/AuthContext';
-import { Calendar as CalendarIcon, AlertCircle, CheckCircle, XCircle, Clock, Moon, Sun, LogOut, ShieldCheck, UserCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, AlertCircle, CheckCircle, XCircle, Clock, Moon, Sun, LogOut, ShieldCheck, UserCircle, StickyNote, PenLine } from 'lucide-react';
 import clsx from 'clsx';
 
 function LoginScreen({ onSignIn }: { onSignIn: () => void }) {
@@ -60,6 +62,8 @@ export default function Home() {
   const [previewCount, setPreviewCount] = useState(1);
   const [viewAdminUid, setViewAdminUid] = useState<string | null>(null);
   const [adminUsers, setAdminUsers] = useState<UserProfile[]>([]);
+  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [noteModal, setNoteModal] = useState<{ dateKey: string; note: string } | null>(null);
   // Tracks whether we've finished loading dates from Firestore.
   // Auto-save is blocked until this is true to prevent overwriting
   // loaded values with empty strings during the initial render.
@@ -84,13 +88,15 @@ export default function Home() {
     (async () => {
       setLoading(true);
       try {
-        const [fetched, dates] = await Promise.all([
+        const [fetched, dates, fetchedNotes] = await Promise.all([
           readRecords(activeUid ?? uid),
           // Only load own dates, not when admin is viewing another user
           !isViewingOtherUser ? getInternshipDates(uid) : Promise.resolve({ internshipStart: '', internshipEnd: '' }),
+          readNotes(activeUid ?? uid),
         ]);
         if (mounted) {
           setRecords(fetched);
+          setNotes(fetchedNotes);
           if (!isViewingOtherUser) {
             // Set BOTH dates together before unblocking auto-save
             setStartDate(dates.internshipStart ?? '');
@@ -154,6 +160,23 @@ export default function Home() {
     return { newPercentage: newPercentage.toFixed(2), newBuffer };
   }, [stats, previewCount]);
 
+  const handleNoteClick = (day: DayInfo) => {
+    if (isViewingOtherUser || !user) return;
+    const dateKey = format(day.date, 'yyyy-MM-dd');
+    setNoteModal({ dateKey, note: notes[dateKey] ?? '' });
+  };
+
+  const handleNoteSave = async (dateKey: string, note: string) => {
+    if (!user) return;
+    await saveNote(user.uid, dateKey, note);
+    setNotes(prev => {
+      const next = { ...prev };
+      if (!note.trim()) delete next[dateKey];
+      else next[dateKey] = note.trim();
+      return next;
+    });
+  };
+
   const handleDayClick = async (day: DayInfo) => {
     if (isViewingOtherUser || !user) return;
     type NewStatus = UserRecord['status'] | 'DELETE';
@@ -202,6 +225,7 @@ export default function Home() {
   if (loading) return <div className="flex h-screen items-center justify-center text-gray-400">Loading records...</div>;
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-8 text-slate-800 dark:text-slate-200">
       <div className="max-w-7xl mx-auto space-y-6">
 
@@ -332,7 +356,7 @@ export default function Home() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
           {months.map(monthStart => (
-            <MonthGrid key={monthStart.toISOString()} monthStart={monthStart} timeline={timeline} onDayClick={handleDayClick} readonly={isViewingOtherUser} />
+            <MonthGrid key={monthStart.toISOString()} monthStart={monthStart} timeline={timeline} onDayClick={handleDayClick} onNoteClick={handleNoteClick} notes={notes} readonly={isViewingOtherUser} />
           ))}
         </div>
 
@@ -341,6 +365,16 @@ export default function Home() {
         </footer>
       </div>
     </div>
+
+    {noteModal && (
+      <NoteModal
+        dateKey={noteModal.dateKey}
+        initialNote={noteModal.note}
+        onSave={handleNoteSave}
+        onClose={() => setNoteModal(null)}
+      />
+    )}
+    </>
   );
 }
 
@@ -370,7 +404,7 @@ function LegendItem({ color, label }: LegendItemProps) {
   );
 }
 
-function MonthGrid({ monthStart, timeline, onDayClick, readonly }: { monthStart: Date; timeline: DayInfo[]; onDayClick: (d: DayInfo) => void; readonly?: boolean }) {
+function MonthGrid({ monthStart, timeline, onDayClick, onNoteClick, notes, readonly }: { monthStart: Date; timeline: DayInfo[]; onDayClick: (d: DayInfo) => void; onNoteClick: (d: DayInfo) => void; notes: Record<string, string>; readonly?: boolean }) {
   const today = new Date();
   const daysInMonth = eachDayOfInterval({ start: startOfMonth(monthStart), end: endOfMonth(monthStart) });
   const startOffset = startOfMonth(monthStart).getDay();
@@ -388,7 +422,7 @@ function MonthGrid({ monthStart, timeline, onDayClick, readonly }: { monthStart:
         {daysInMonth.map((date) => {
           const dayInfo = timeline.find(d => isSameDay(d.date, date));
           const isToday = isSameDay(date, today);
-          if (dayInfo) return <DayCell key={date.toISOString()} day={dayInfo} isToday={isToday} onClick={() => onDayClick(dayInfo)} readonly={readonly} />;
+          if (dayInfo) return <DayCell key={date.toISOString()} day={dayInfo} isToday={isToday} onClick={() => onDayClick(dayInfo)} onNoteClick={onNoteClick} notes={notes} readonly={readonly} />;
           return (
             <div key={date.toISOString()} className={clsx("h-12 sm:h-14 rounded-lg flex flex-col items-center justify-center text-xs sm:text-sm text-gray-300 dark:text-slate-600 border border-transparent", isToday && "ring-2 ring-indigo-400")}>
               {date.getDate()}
@@ -400,7 +434,10 @@ function MonthGrid({ monthStart, timeline, onDayClick, readonly }: { monthStart:
   );
 }
 
-function DayCell({ day, onClick, isToday, readonly }: { day: DayInfo; onClick: () => void; isToday?: boolean; readonly?: boolean }) {
+function DayCell({ day, onClick, onNoteClick, notes, isToday, readonly }: { day: DayInfo; onClick: () => void; onNoteClick: (d: DayInfo) => void; notes: Record<string, string>; isToday?: boolean; readonly?: boolean }) {
+  const dateKey = format(day.date, 'yyyy-MM-dd');
+  const noteText = notes[dateKey] ?? '';
+  const hasNote = !!noteText;
   let bg = 'bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700';
   if (day.status === 'OFF') {
     bg = day.holidayName
@@ -415,14 +452,110 @@ function DayCell({ day, onClick, isToday, readonly }: { day: DayInfo; onClick: (
   } else if (day.status === 'PRESENT') {
     bg = 'bg-green-50 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700';
   }
+
+  const titleText = [
+    day.holidayName || (day.isSandwich ? 'Sandwich Leave Rule Applied' : day.status),
+    noteText ? `Note: ${noteText}` : '',
+  ].filter(Boolean).join(' — ');
+
   return (
-    <button onClick={readonly ? undefined : onClick}
-      className={clsx("h-12 sm:h-14 rounded-lg flex flex-col items-center justify-center text-xs sm:text-sm border transition-all relative group focus:outline-none", bg, isToday && "ring-2 ring-inset ring-indigo-500", !readonly && "focus:ring-2 focus:ring-indigo-500", readonly && "cursor-default")}
-      title={day.holidayName || (day.isSandwich ? "Sandwich Leave Rule Applied" : day.status)}>
-      <span className={clsx("font-semibold", isToday && "underline")}>{day.date.getDate()}</span>
-      {day.leaveAmount > 0 && !day.isSandwich && <span className="text-[9px] sm:text-[10px] opacity-75">-{day.leaveAmount}</span>}
-      {day.isSandwich && <span className="text-[8px] font-bold">SAND</span>}
-      {day.holidayName && <span className="absolute bottom-0 w-full text-[8px] truncate px-1 text-center font-bold pb-1" title={day.holidayName}>{day.holidayName.substring(0, 6)}..</span>}
-    </button>
+    <div className={clsx('relative group h-12 sm:h-14 rounded-lg border transition-all', bg, isToday && 'ring-2 ring-inset ring-indigo-500')}>
+      {/* Main day button — cycles leave status */}
+      <button
+        onClick={readonly ? undefined : onClick}
+        className={clsx('absolute inset-0 flex flex-col items-center justify-center text-xs sm:text-sm focus:outline-none rounded-lg', !readonly && 'focus:ring-2 focus:ring-indigo-500', readonly && 'cursor-default')}
+        title={titleText}
+      >
+        <span className={clsx('font-semibold', isToday && 'underline')}>{day.date.getDate()}</span>
+        {day.leaveAmount > 0 && !day.isSandwich && <span className="text-[9px] sm:text-[10px] opacity-75">-{day.leaveAmount}</span>}
+        {day.isSandwich && <span className="text-[8px] font-bold">SAND</span>}
+        {day.holidayName && <span className="absolute bottom-0 w-full text-[8px] truncate px-1 text-center font-bold pb-1" title={day.holidayName}>{day.holidayName.substring(0, 6)}..</span>}
+      </button>
+
+      {/* Note indicator dot */}
+      {hasNote && (
+        <span className="absolute top-0.5 left-0.5 w-1.5 h-1.5 bg-indigo-500 rounded-full pointer-events-none" title={noteText} />
+      )}
+
+      {/* Pencil button — opens note modal */}
+      {!readonly && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onNoteClick(day); }}
+          className="absolute bottom-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/20 focus:outline-none"
+          title="Add / edit note"
+        >
+          <PenLine className="w-2.5 h-2.5 text-slate-400 dark:text-slate-400" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// --------------- Note Modal ---------------
+
+function NoteModal({ dateKey, initialNote, onSave, onClose }: {
+  dateKey: string;        // YYYY-MM-DD
+  initialNote: string;
+  onSave: (dateKey: string, note: string) => void;
+  onClose: () => void;
+}) {
+  const [text, setText] = useState(initialNote);
+  const displayDate = format(parseISO(dateKey), 'EEEE, MMMM d, yyyy');
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Escape') onClose();
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { onSave(dateKey, text); onClose(); }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl border border-gray-200 dark:border-slate-700"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <StickyNote className="w-5 h-5 text-indigo-500" />
+          <h3 className="font-semibold text-slate-800 dark:text-slate-100">Day Note</h3>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-slate-400 mb-3">{displayDate}</p>
+
+        <textarea
+          autoFocus
+          value={text}
+          onChange={e => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="e.g. Doctor appointment, family event, project milestone..."
+          className="w-full rounded-lg border border-gray-300 dark:border-slate-600 bg-gray-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          rows={4}
+        />
+        <p className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">Ctrl + Enter to save &nbsp;·&nbsp; Esc to cancel</p>
+
+        <div className="flex gap-2 mt-4 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-lg border border-gray-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+          >
+            Cancel
+          </button>
+          {initialNote && (
+            <button
+              onClick={() => { onSave(dateKey, ''); onClose(); }}
+              className="px-4 py-2 text-sm rounded-lg bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+            >
+              Delete Note
+            </button>
+          )}
+          <button
+            onClick={() => { onSave(dateKey, text); onClose(); }}
+            className="px-4 py-2 text-sm rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            Save Note
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

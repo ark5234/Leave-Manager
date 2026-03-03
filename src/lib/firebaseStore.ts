@@ -136,3 +136,25 @@ export async function getInternshipDates(uid: string): Promise<InternshipDates> 
     internshipEnd: d.internshipEnd ?? '',
   };
 }
+
+// --------------- Day Notes ---------------
+
+/** Read all notes for a user; returns a map of YYYY-MM-DD → note text */
+export async function readNotes(uid: string): Promise<Record<string, string>> {
+  const ref = collection(db, 'users', uid, 'notes');
+  const snap = await getDocs(ref);
+  const result: Record<string, string> = {};
+  snap.docs.forEach(d => { result[d.id] = d.data().note as string; });
+  return result;
+}
+
+/** Save or delete the note for a specific day.
+ *  Passing an empty/whitespace-only string deletes the note document. */
+export async function saveNote(uid: string, dateKey: string, note: string): Promise<void> {
+  const ref = doc(db, 'users', uid, 'notes', dateKey);
+  if (!note.trim()) {
+    await deleteDoc(ref);
+  } else {
+    await setDoc(ref, { note: note.trim() });
+  }
+}
