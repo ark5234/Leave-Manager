@@ -168,13 +168,19 @@ export default function Home() {
 
   const handleNoteSave = async (dateKey: string, note: string) => {
     if (!user) return;
-    await saveNote(user.uid, dateKey, note);
+    // Update local state immediately so UI reflects the change
     setNotes(prev => {
       const next = { ...prev };
       if (!note.trim()) delete next[dateKey];
       else next[dateKey] = note.trim();
       return next;
     });
+    // Persist to Firestore; log but don't crash if it fails
+    try {
+      await saveNote(user.uid, dateKey, note);
+    } catch (err) {
+      console.error('Failed to save note:', err);
+    }
   };
 
   const handleDayClick = async (day: DayInfo) => {

@@ -6,6 +6,8 @@ import {
   deleteDoc,
   getDocs,
   getDoc,
+  updateDoc,
+  deleteField,
 } from 'firebase/firestore';
 import type { UserRecord } from './attendance';
 
@@ -138,23 +140,29 @@ export async function getInternshipDates(uid: string): Promise<InternshipDates> 
 }
 
 // --------------- Day Notes ---------------
+// Notes are stored as a map field `notesByDate` on the user's profile document
+// (users/{uid}) so they are covered by the same Firestore security rules.
 
 /** Read all notes for a user; returns a map of YYYY-MM-DD → note text */
 export async function readNotes(uid: string): Promise<Record<string, string>> {
-  const ref = collection(db, 'users', uid, 'notes');
-  const snap = await getDocs(ref);
-  const result: Record<string, string> = {};
-  snap.docs.forEach(d => { result[d.id] = d.data().note as string; });
-  return result;
+  try {
+    const ref = doc(db, 'users', uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return {};
+    return (snap.data().notesByDate as Record<string, string>) ?? {};
+  } catch {
+    return {};
+  }
 }
 
 /** Save or delete the note for a specific day.
- *  Passing an empty/whitespace-only string deletes the note document. */
+ *  Passing an empty/whitespace-only string removes the key from the map. */
 export async function saveNote(uid: string, dateKey: string, note: string): Promise<void> {
-  const ref = doc(db, 'users', uid, 'notes', dateKey);
+  const ref = doc(db, 'users', uid);
   if (!note.trim()) {
-    await deleteDoc(ref);
+    // deleteField() removes only this key from the notesByDate map
+    await updateDoc(ref, { [`notesByDate.${dateKey}`]: deleteField() });
   } else {
-    await setDoc(ref, { note: note.trim() });
+    await updateDoc(ref, { [`notesByDate.${dateKey}`]: note.trim() });
   }
 }
