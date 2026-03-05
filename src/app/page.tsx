@@ -465,32 +465,43 @@ function DayCell({ day, onClick, onNoteClick, notes, isToday, readonly }: { day:
   ].filter(Boolean).join(' — ');
 
   return (
-    <div className={clsx('relative group h-12 sm:h-14 rounded-lg border transition-all', bg, isToday && 'ring-2 ring-inset ring-indigo-500')}>
+    <div className={clsx('relative group h-14 sm:h-16 rounded-lg border transition-all', bg, isToday && 'ring-2 ring-inset ring-indigo-500')}>
       {/* Main day button — cycles leave status */}
       <button
         onClick={readonly ? undefined : onClick}
-        className={clsx('absolute inset-0 flex flex-col items-center justify-center text-xs sm:text-sm focus:outline-none rounded-lg', !readonly && 'focus:ring-2 focus:ring-indigo-500', readonly && 'cursor-default')}
+        className={clsx('absolute inset-0 flex flex-col items-center justify-center text-xs sm:text-sm focus:outline-none rounded-lg pb-1', !readonly && 'focus:ring-2 focus:ring-indigo-500', readonly && 'cursor-default')}
         title={titleText}
       >
-        <span className={clsx('font-semibold', isToday && 'underline')}>{day.date.getDate()}</span>
-        {day.leaveAmount > 0 && !day.isSandwich && <span className="text-[9px] sm:text-[10px] opacity-75">-{day.leaveAmount}</span>}
-        {day.isSandwich && <span className="text-[8px] font-bold">SAND</span>}
+        <span className={clsx('font-semibold leading-none', isToday && 'underline')}>{day.date.getDate()}</span>
+        {day.leaveAmount > 0 && !day.isSandwich && <span className="text-[9px] sm:text-[10px] opacity-75 leading-none mt-px">-{day.leaveAmount}</span>}
+        {day.isSandwich && <span className="text-[8px] font-bold leading-none mt-px">SAND</span>}
+        {/* Note text preview — always visible when a note exists */}
+        {hasNote && !day.holidayName && (
+          <span className="text-[8px] sm:text-[9px] leading-none mt-0.5 max-w-full px-1 truncate opacity-80 text-indigo-600 dark:text-indigo-300 font-medium">
+            {noteText.length > 8 ? noteText.substring(0, 7) + '…' : noteText}
+          </span>
+        )}
         {day.holidayName && <span className="absolute bottom-0 w-full text-[8px] truncate px-1 text-center font-bold pb-1" title={day.holidayName}>{day.holidayName.substring(0, 6)}..</span>}
       </button>
 
-      {/* Note indicator dot */}
+      {/* Note indicator dot — shown when there is a note; also visible if holiday takes the text slot */}
       {hasNote && (
-        <span className="absolute top-0.5 left-0.5 w-1.5 h-1.5 bg-indigo-500 rounded-full pointer-events-none" title={noteText} />
+        <span className="absolute top-0.5 left-0.5 w-2 h-2 bg-indigo-500 rounded-full pointer-events-none" title={noteText} />
       )}
 
-      {/* Pencil button — opens note modal */}
+      {/* Pencil button — always visible on mobile, hover-only on desktop */}
       {!readonly && (
         <button
           onClick={(e) => { e.stopPropagation(); onNoteClick(day); }}
-          className="absolute bottom-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-black/10 dark:hover:bg-white/20 focus:outline-none"
+          className={clsx(
+            'absolute bottom-0.5 right-0.5 p-0.5 rounded transition-opacity focus:outline-none',
+            'hover:bg-black/10 dark:hover:bg-white/20',
+            // Mobile: always visible. Desktop (sm+): hidden until hover.
+            hasNote ? 'opacity-60 sm:opacity-0 sm:group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100',
+          )}
           title="Add / edit note"
         >
-          <PenLine className="w-2.5 h-2.5 text-slate-400 dark:text-slate-400" />
+          <PenLine className={clsx('w-3 h-3', hasNote ? 'text-indigo-500 dark:text-indigo-400' : 'text-slate-400')} />
         </button>
       )}
     </div>
