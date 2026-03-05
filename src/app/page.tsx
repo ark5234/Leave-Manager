@@ -278,37 +278,33 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Row 2: date range + reset — full width, two columns on mobile */}
-          <div className="flex items-center gap-2">
-            {/* Date picker pill */}
-            <div className="flex items-center flex-1 min-w-0 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 px-2 py-1.5">
-              <CalendarIcon className="w-4 h-4 text-indigo-500 shrink-0 mr-1.5" />
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[9px] text-gray-400 dark:text-slate-400 font-semibold uppercase leading-none">Start</span>
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
-                  className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select start date" />
-              </div>
-              <div className="w-px h-7 bg-gray-200 dark:bg-slate-600 mx-1.5 shrink-0" />
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[9px] text-gray-400 dark:text-slate-400 font-semibold uppercase leading-none">End</span>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
-                  className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select end date" />
-              </div>
+          {/* Row 2: date range — two equal columns */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2">
+              <span className="text-[9px] text-gray-400 dark:text-slate-400 font-semibold uppercase leading-none block mb-0.5">Start</span>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select start date" />
             </div>
-            {/* Reset button — compact on mobile */}
-            {!isViewingOtherUser && (
-              <button type="button"
-                className="shrink-0 text-xs px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 whitespace-nowrap"
-                onClick={async () => {
-                  const ok = confirm('Reset all saved leaves? This cannot be undone.');
-                  if (!ok) return;
-                  await clearAll(user.uid);
-                  setRecords([]);
-                }}>
-                Reset
-              </button>
-            )}
+            <div className="bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 px-3 py-2">
+              <span className="text-[9px] text-gray-400 dark:text-slate-400 font-semibold uppercase leading-none block mb-0.5">End</span>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select end date" />
+            </div>
           </div>
+
+          {/* Row 3: reset button — full width on mobile */}
+          {!isViewingOtherUser && (
+            <button type="button"
+              className="w-full sm:w-auto sm:self-end text-sm px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium"
+              onClick={async () => {
+                const ok = confirm('Reset all saved leaves? This cannot be undone.');
+                if (!ok) return;
+                await clearAll(user.uid);
+                setRecords([]);
+              }}>
+              Reset Leaves
+            </button>
+          )}
         </div>
 
         {isAdmin && (
