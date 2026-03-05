@@ -41,20 +41,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
-      if (u) {
-        // Sync Google-sourced fields (won't overwrite custom fields thanks to merge: true + separate handling)
-        await saveUserProfile(u.uid, {
-          email: u.email || '',
-          displayName: u.displayName || '',
-          photoURL: u.photoURL || '',
-        });
-        // Load full profile including any custom overrides
-        const p = await getProfile(u.uid);
-        setProfile(p);
-      } else {
-        setProfile(null);
+      try {
+        if (u) {
+          // Sync Google-sourced fields (won't overwrite custom fields thanks to merge: true + separate handling)
+          await saveUserProfile(u.uid, {
+            email: u.email || '',
+            displayName: u.displayName || '',
+            photoURL: u.photoURL || '',
+          });
+          // Load full profile including any custom overrides
+          const p = await getProfile(u.uid);
+          setProfile(p);
+        } else {
+          setProfile(null);
+        }
+      } catch (err) {
+        // Don't let a Firestore error on profile sync block the whole app
+        console.error('Auth profile sync error:', err);
+      } finally {
+        // Always unblock the loading gate so the page renders
+        setLoading(false);
       }
-      setLoading(false);
     });
     return unsub;
   }, []);

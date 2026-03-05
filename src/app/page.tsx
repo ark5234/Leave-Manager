@@ -80,35 +80,41 @@ export default function Home() {
   // Load records + internship dates.
   // Dependency is on user.uid and viewAdminUid so we re-fetch when admin switches user.
   useEffect(() => {
-    if (!user) return; // LoginScreen shown above — no setState needed here
+    if (!user) return;
     const uid = user.uid;
+    const effectiveUid = activeUid ?? uid;
     // Reset so auto-save won't fire until this load completes
     datesLoaded.current = false;
     let mounted = true;
     (async () => {
       setLoading(true);
+      // --- Records (critical) — loaded first, independently ---
       try {
-        const [fetched, dates, fetchedNotes] = await Promise.all([
-          readRecords(activeUid ?? uid),
-          // Only load own dates, not when admin is viewing another user
-          !isViewingOtherUser ? getInternshipDates(uid) : Promise.resolve({ internshipStart: '', internshipEnd: '' }),
-          readNotes(activeUid ?? uid),
+        const fetched = await readRecords(effectiveUid);
+        if (mounted) setRecords(fetched);
+      } catch (err) {
+        console.error('Failed to load records:', err);
+      }
+      // --- Notes + dates (non-critical) — failure won't hide records ---
+      try {
+        const [dates, fetchedNotes] = await Promise.all([
+          !isViewingOtherUser
+            ? getInternshipDates(uid)
+            : Promise.resolve({ internshipStart: '', internshipEnd: '' }),
+          readNotes(effectiveUid),
         ]);
         if (mounted) {
-          setRecords(fetched);
           setNotes(fetchedNotes);
           if (!isViewingOtherUser) {
-            // Set BOTH dates together before unblocking auto-save
             setStartDate(dates.internshipStart ?? '');
             setEndDate(dates.internshipEnd ?? '');
           }
-          // Only allow auto-save after the load is fully done
-          datesLoaded.current = true;
         }
       } catch (err) {
-        console.error('Failed to load data from Firestore:', err);
-        datesLoaded.current = true; // unblock even on error
+        console.error('Failed to load notes/dates:', err);
       } finally {
+        // Always unblock loading and auto-save
+        datesLoaded.current = true;
         if (mounted) setLoading(false);
       }
     })();
