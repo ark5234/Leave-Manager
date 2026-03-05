@@ -241,43 +241,18 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50 dark:bg-slate-900 p-4 sm:p-8 text-slate-800 dark:text-slate-200">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <CalendarIcon className="w-6 h-6 text-indigo-600" />
-              Leave Manager
-            </h1>
-            <p className="text-gray-500 dark:text-slate-300 text-sm mt-1">Plan your internship attendance wisely. (Sandwich rules active)</p>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-            <div className="flex items-center justify-between gap-1 sm:gap-3 bg-gray-50 dark:bg-slate-700 p-2 rounded-lg border border-gray-200 dark:border-slate-700 shadow-sm flex-1 sm:flex-none">
-              <div className="flex items-center gap-1 sm:gap-2 px-1 sm:px-2 flex-1">
-                <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600" />
-                <div className="flex flex-col w-full">
-                  <label className="text-[9px] sm:text-[10px] text-gray-500 dark:text-slate-300 font-semibold uppercase">Start</label>
-                  <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="bg-transparent text-xs sm:text-sm font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select start date" />
-                </div>
-              </div>
-              <div className="w-px h-8 bg-gray-200 dark:bg-slate-600 mx-1 sm:mx-2" />
-              <div className="flex items-center gap-1 sm:gap-2 px-1 sm:px-2 flex-1">
-                <div className="flex flex-col w-full">
-                  <label className="text-[9px] sm:text-[10px] text-gray-500 dark:text-slate-300 font-semibold uppercase">End</label>
-                  <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="bg-transparent text-xs sm:text-sm font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select end date" />
-                </div>
-              </div>
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-slate-700 space-y-3">
+          {/* Row 1: title + avatar/actions — always a single row */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <h1 className="text-xl font-bold flex items-center gap-2 truncate">
+                <CalendarIcon className="w-5 h-5 text-indigo-600 shrink-0" />
+                Leave Manager
+              </h1>
+              <p className="text-gray-500 dark:text-slate-300 text-xs mt-0.5 hidden sm:block">Plan your internship attendance wisely. (Sandwich rules active)</p>
             </div>
-            <div className="flex items-center justify-between sm:justify-start gap-2">
-              {!isViewingOtherUser && (
-                <button type="button" className="text-xs px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex-1 sm:flex-none whitespace-nowrap"
-                  onClick={async () => {
-                    const ok = confirm('Reset all saved leaves? This cannot be undone.');
-                    if (!ok) return;
-                    await clearAll(user.uid);
-                    setRecords([]);
-                  }}>
-                  Reset Leaves
-                </button>
-              )}
+            {/* Right-side controls always in one row */}
+            <div className="flex items-center gap-1.5 shrink-0">
               <button type="button"
                 onClick={() => {
                   const next = !dark;
@@ -289,44 +264,76 @@ export default function Home() {
                 title="Toggle theme" aria-label="Toggle dark mode">
                 {dark ? <Sun className="w-4 h-4 text-yellow-400" /> : <Moon className="w-4 h-4 text-slate-600" />}
               </button>
-              <div className="flex items-center gap-2">
-                <a href="/profile" title="View profile" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                  {photoURL ? (
-                    <img src={photoURL} alt="avatar" className="w-8 h-8 rounded-full ring-2 ring-indigo-400 object-cover" />
-                  ) : (
-                    <UserCircle className="w-8 h-8 text-indigo-400" />
-                  )}
-                  <span className="text-xs text-gray-500 dark:text-slate-400 hidden sm:block max-w-[120px] truncate">{displayName}</span>
-                </a>
-                <button onClick={logout} title="Sign out" className="p-2 rounded-md border bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600 border-gray-200 dark:border-slate-600" aria-label="Sign out">
-                  <LogOut className="w-4 h-4" />
-                </button>
+              <a href="/profile" title="View profile" className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                {photoURL ? (
+                  <img src={photoURL} alt="avatar" className="w-8 h-8 rounded-full ring-2 ring-indigo-400 object-cover" />
+                ) : (
+                  <UserCircle className="w-8 h-8 text-indigo-400" />
+                )}
+                <span className="text-xs text-gray-500 dark:text-slate-400 hidden sm:block max-w-[120px] truncate">{displayName}</span>
+              </a>
+              <button onClick={logout} title="Sign out" className="p-2 rounded-md border bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-200 dark:hover:bg-slate-600 border-gray-200 dark:border-slate-600" aria-label="Sign out">
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Row 2: date range + reset — full width, two columns on mobile */}
+          <div className="flex items-center gap-2">
+            {/* Date picker pill */}
+            <div className="flex items-center flex-1 min-w-0 bg-gray-50 dark:bg-slate-700 rounded-lg border border-gray-200 dark:border-slate-600 px-2 py-1.5">
+              <CalendarIcon className="w-4 h-4 text-indigo-500 shrink-0 mr-1.5" />
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[9px] text-gray-400 dark:text-slate-400 font-semibold uppercase leading-none">Start</span>
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select start date" />
+              </div>
+              <div className="w-px h-7 bg-gray-200 dark:bg-slate-600 mx-1.5 shrink-0" />
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[9px] text-gray-400 dark:text-slate-400 font-semibold uppercase leading-none">End</span>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-transparent text-xs font-medium focus:outline-none text-slate-800 dark:text-slate-100 w-full" title="Select end date" />
               </div>
             </div>
+            {/* Reset button — compact on mobile */}
+            {!isViewingOtherUser && (
+              <button type="button"
+                className="shrink-0 text-xs px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 whitespace-nowrap"
+                onClick={async () => {
+                  const ok = confirm('Reset all saved leaves? This cannot be undone.');
+                  if (!ok) return;
+                  await clearAll(user.uid);
+                  setRecords([]);
+                }}>
+                Reset
+              </button>
+            )}
           </div>
         </div>
 
         {isAdmin && (
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-amber-50 dark:bg-amber-900/20 p-3 sm:p-4 rounded-xl border border-amber-200 dark:border-amber-700">
+          <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-xl border border-amber-200 dark:border-amber-700 space-y-2">
             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 font-semibold text-sm">
               <ShieldCheck className="w-4 h-4" />
               Admin View
             </div>
-            <select
-              aria-label="Select user to view"
-              title="Select user to view"
-              value={viewAdminUid ?? user.uid} onChange={(e) => setViewAdminUid(e.target.value === user.uid ? null : e.target.value)}
-              className="border rounded px-3 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-amber-300 dark:border-amber-600">
-              <option value={user.uid}>Your own records</option>
-              {adminUsers.filter(u => u.uid !== user.uid).map(u => (
-                <option key={u.uid} value={u.uid}>{u.displayName || u.email} ({u.email})</option>
-              ))}
-            </select>
-            {isViewingOtherUser && <span className="text-xs text-amber-600 dark:text-amber-400 italic">Read-only — clicks disabled</span>}
-            <button onClick={() => getAllUserProfiles().then(setAdminUsers)}
-              className="text-xs px-2 py-1 bg-amber-100 dark:bg-amber-800 text-amber-700 dark:text-amber-200 rounded border border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-700">
-              Refresh users
-            </button>
+            <div className="flex items-center gap-2">
+              <select
+                aria-label="Select user to view"
+                title="Select user to view"
+                value={viewAdminUid ?? user.uid} onChange={(e) => setViewAdminUid(e.target.value === user.uid ? null : e.target.value)}
+                className="flex-1 min-w-0 border rounded px-2 py-1.5 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border-amber-300 dark:border-amber-600">
+                <option value={user.uid}>Your own records</option>
+                {adminUsers.filter(u => u.uid !== user.uid).map(u => (
+                  <option key={u.uid} value={u.uid}>{u.displayName || u.email} ({u.email})</option>
+                ))}
+              </select>
+              <button onClick={() => getAllUserProfiles().then(setAdminUsers)}
+                className="shrink-0 text-xs px-2 py-1.5 bg-amber-100 dark:bg-amber-800 text-amber-700 dark:text-amber-200 rounded border border-amber-300 dark:border-amber-600 hover:bg-amber-200 dark:hover:bg-amber-700 whitespace-nowrap">
+                Refresh
+              </button>
+            </div>
+            {isViewingOtherUser && <p className="text-xs text-amber-600 dark:text-amber-400 italic">Read-only — clicks disabled</p>}
           </div>
         )}
 
@@ -337,32 +344,30 @@ export default function Home() {
           <StatsCard label="Working Days" value={stats.workingDays} subtext={`Out of ${timeline.length} total`} color="text-slate-600" icon={<Clock className="w-5 h-5" />} />
         </div>
 
-        <div className="mt-3 flex items-start gap-3">
-          <div className="flex items-center gap-2">
-            <label htmlFor="preview-select" className="text-sm font-medium">Simulate additional leaves:</label>
-            <select id="preview-select" aria-label="Simulate additional leaves" title="Select number of additional leave days to simulate" value={previewCount} onChange={(e) => setPreviewCount(Number(e.target.value))} className="border rounded px-2 py-1">
-              <option value={0.5}>+0.5 day</option>
-              <option value={1}>+1 day</option>
-              <option value={2}>+2 days</option>
-              <option value={3}>+3 days</option>
-              <option value={5}>+5 days</option>
-            </select>
-            <button onClick={() => setShowPreview(s => !s)} className="ml-2 px-3 py-1 bg-indigo-600 text-white rounded">What if?</button>
-          </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <label htmlFor="preview-select" className="text-sm font-medium whitespace-nowrap">Simulate additional leaves:</label>
+          <select id="preview-select" aria-label="Simulate additional leaves" title="Select number of additional leave days to simulate" value={previewCount} onChange={(e) => setPreviewCount(Number(e.target.value))} className="border rounded px-2 py-1 text-sm">
+            <option value={0.5}>+0.5 day</option>
+            <option value={1}>+1 day</option>
+            <option value={2}>+2 days</option>
+            <option value={3}>+3 days</option>
+            <option value={5}>+5 days</option>
+          </select>
+          <button onClick={() => setShowPreview(s => !s)} className="px-3 py-1 bg-indigo-600 text-white rounded text-sm">What if?</button>
           {showPreview && (
-            <div className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
-              <div className="text-sm">Projected Attendance: <span className="font-bold">{preview.newPercentage}%</span></div>
-              <div className="text-sm">Projected Safe Buffer: <span className="font-bold">{preview.newBuffer} Days</span></div>
+            <div className="w-full sm:w-auto bg-white dark:bg-slate-800 p-3 rounded-lg border border-gray-100 dark:border-slate-700 text-sm">
+              <div>Projected Attendance: <span className="font-bold">{preview.newPercentage}%</span></div>
+              <div>Projected Safe Buffer: <span className="font-bold">{preview.newBuffer} Days</span></div>
             </div>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-4 text-sm bg-white dark:bg-slate-800 p-4 rounded-lg border border-gray-100 dark:border-slate-700">
-          <LegendItem color="bg-green-100 border-green-300 text-green-700 dark:bg-green-900 dark:text-green-300" label="Present (Work)" />
+        <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs bg-white dark:bg-slate-800 p-3 rounded-lg border border-gray-100 dark:border-slate-700">
+          <LegendItem color="bg-green-100 border-green-300 text-green-700 dark:bg-green-900 dark:text-green-300" label="Present" />
           <LegendItem color="bg-red-100 border-red-300 text-red-700 dark:bg-red-900 dark:text-red-300" label="Full Leave" />
           <LegendItem color="bg-orange-100 border-orange-300 text-orange-700 dark:bg-orange-900 dark:text-orange-300" label="Half Leave" />
-          <LegendItem color="bg-red-200 border-red-400 text-red-800 dark:bg-red-800 dark:text-red-200" label="Sandwich Leave (Penalty)" />
-          <LegendItem color="bg-gray-100 border-gray-300 text-gray-500 dark:bg-slate-700 dark:text-slate-300" label="Off (Weekend)" />
+          <LegendItem color="bg-red-200 border-red-400 text-red-800 dark:bg-red-800 dark:text-red-200" label="Sandwich" />
+          <LegendItem color="bg-gray-100 border-gray-300 text-gray-500 dark:bg-slate-700 dark:text-slate-300" label="Off" />
           <LegendItem color="bg-purple-100 border-purple-300 text-purple-600 dark:bg-purple-900 dark:text-purple-300" label="Holiday" />
         </div>
 
